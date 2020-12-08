@@ -19,6 +19,8 @@ parser.add_argument("data_root")
 parser.add_argument("--db_path", default=None) 
 parser.add_argument("--force", action='store_true', default=False)
 parser.add_argument("--verbose", action='store_true', default=False)
+parser.add_argument("--no-reports", action='store_true', default=False)
+parser.add_argument("--no-events", action='store_true', default=False)
 args = parser.parse_args()
 
 exp = args.experiment
@@ -38,13 +40,18 @@ paths_dict["wordpool"] = os.path.join(root_dir, 'wordpool.txt')
 # Process json into pandas dataframe structures
 data_container = ContainerFactory.get_container(paths_dict)
 
+if args.force:
+    print("Forcing event cleaning")
+
 # Load the data from the psiTurk experiment database and process it into JSON files
 if args.db_path is not None:
     psiturk_tools.load_psiturk_data(data_container, force=args.force, verbose=args.verbose)
 
-data_cleaner = CleanerFactory.get_cleaner(data_container)
-data_cleaner.clean(force=args.force, verbose=args.verbose)
+if not args.no_events:
+    data_cleaner = CleanerFactory.get_cleaner(data_container)
+    data_cleaner.clean(force=args.force, verbose=args.verbose)
 
-# Generate a PDF report for each participant, along with an aggregate report and summary stats files
-report_generator = ReporterFactory.get_reporter(data_container)
-report_generator.run_reporting()
+if not args.no_reports:
+    # Generate a PDF report for each participant, along with an aggregate report and summary stats files
+    report_generator = ReporterFactory.get_reporter(data_container)
+    report_generator.run_reporting()

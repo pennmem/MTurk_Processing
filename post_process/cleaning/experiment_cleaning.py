@@ -19,8 +19,6 @@ class DataCleaner(object):
         self.modifiers = []
         self.event_types = []
 
-
-
     @progress_bar()
     def clean(self, force=False, verbose=False):
 
@@ -48,9 +46,9 @@ class DataCleaner(object):
 
             try:
                 for ev_type in self.event_types:
-                    events_list.append(ev_type(raw_data))
+                    events_list.extend(ev_type(raw_data))
 
-                events_df = pd.concat(events_list, sort=True)
+                events_df = pd.DataFrame(events_list)
                 events_df["subject"] = self.get_subject(raw_data)
                 events_df["condition"] = self.get_condition(raw_data)
                 events_df["counterbalance"] = self.get_counterbalance(raw_data)
@@ -68,7 +66,6 @@ class DataCleaner(object):
                     exclude.append(subject)
 
             except Exception:
-                # TODO: add verbose arg
                 if verbose:
                     tb.print_exc()
                 errors.append(subject)
@@ -79,23 +76,16 @@ class DataCleaner(object):
         # database access is not needed to work with data.
         # In principle, the database contains PHI and should
         # not be open to all analysts
-        self.data_container.record_excluded(exclude)
+        self.data_container.record_excluded(exclude + errors)
         
         if verbose:
+            print(exclude)
             print(errors)
-
-        # progress bar can optionally return a final result
-        return None 
 
     ####################
     # Collection of functions that extract pieces of common format from jspsych 
     ####################
 
-
-    # TODO: should these be data_container functions?
-    # at the moment, this class seems to hold both the base class
-    # and the implementation for jspsych, when much of this
-    # could also be used for other lab data otherwise
     def get_item_id(self, item):
         if item not in self.data_container.wordpool:
             return -1
@@ -147,7 +137,7 @@ class DataCleaner(object):
             if trialdata.get("trial_type", None) == "free-recall":
                 events.extend(free_recall_node(trialdata))
         
-        return pd.DataFrame(events)
+        return events 
 
     def get_math_distractor_events(self, raw_data):
         '''
@@ -165,7 +155,7 @@ class DataCleaner(object):
             if trialdata.get("trial_type", None) == "math-distractor":
                events.extend(math_distractor_node(trialdata)) 
 
-        return pd.DataFrame(events)
+        return events 
 
     def get_internal_events(self, raw_data):
         '''
@@ -181,11 +171,10 @@ class DataCleaner(object):
         wanted_keys = ["type", "mstime", "value", "interval"]
         events = [{k: e[k] for k in wanted_keys} for e in events]
 
-        events = pd.DataFrame(events)
-
         # internal events are recorded as unixtime, task events are
         # recored by offset from task start
-        events["mstime"] = events["mstime"] - self.get_starttime(raw_data)
+        for ev in events:
+            ev["mstime"] =  ev["mstime"] - self.get_starttime(raw_data)
         
         return events
 
@@ -199,7 +188,7 @@ class DataCleaner(object):
             if trialdata.get("trial_type", None) == "countdown":
                events.extend(countdown_node(trialdata)) 
 
-        return pd.DataFrame(events)
+        return events 
 
 
     def process_survey(self):

@@ -1,4 +1,4 @@
-from post_process.cleaning.experiment_cleaning import DataCleaner, EventDecorators 
+from post_process.cleaning.experiment_cleaning import DataCleaner 
 from post_process.cleaning.plugin_processing import hold_keys_node
 import pandas as pd
 import numpy as np

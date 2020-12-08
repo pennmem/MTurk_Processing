@@ -1,9 +1,8 @@
-from post_process.cleaning.experiment_cleaning import DataCleaner, EventDecorators
+from post_process.cleaning.experiment_cleaning import DataCleaner 
 from post_process.utils import progress_bar, strip_tags, change_key, filter_keys
 from post_process.cleaning.plugin_processing import  free_sort_node, positional_html_display_node, hold_keys_check_node
 import pandas as pd
 import numpy as np
-
 
 class OrderedRecallCleaner(DataCleaner):
     def __init__(self, data_container):
@@ -88,12 +87,45 @@ class OrderedRecallCleaner(DataCleaner):
 
         def find_recall(row):
             drop = drop_events.query("item == @row['item'] and listno == @row['listno']")
-            tg = drop["target"]
-            return tg.values[0] + 1
+            try:
+                tg = drop["target"].values[0] + 1
+                return tg
+            except Exception as e:
+                print("error finding target")
+                print(drop)
+                raise(e)
 
-        events.loc[(events["type"] == "WORD"), "recalled"] = events.loc[(events["type"] == "WORD")].apply(find_recall, axis=1)
-        events.loc[(events["type"] == "WORD"), "rt"] = events.loc[(events["type"] == "WORD")].apply(find_rectime, axis=1)
-        events.loc[(events["type"] == "WORD"), "correct"] = (events.loc[(events["type"] == 'WORD'),"serialpos"] == (events.loc[(events["type"] == 'WORD'), "recalled"]))*1
-        events.loc[(events["type"] == "WORD"), "distance"] = events.loc[(events["type"] == 'WORD'), "recalled"] - events.loc[(events["type"] == 'WORD'), "serialpos"]
+        events.loc[(events["type"] == "WORD"), "recalled"] = events.query("type == 'WORD'").apply(find_recall, axis=1)
+        events.loc[(events["type"] == "WORD"), "rt"] = events.query("type == 'WORD'").apply(find_rectime, axis=1)
+        events.loc[(events["type"] == "WORD"), "correct"] = (events.query("type == 'WORD'")["serialpos"] == (events.query("type == 'WORD'")["recalled"]))*1
+        events.loc[(events["type"] == "WORD"), "distance"] = events.query("type == 'WORD'")["recalled"] - events.query("type == 'WORD'")["serialpos"]
+        events.loc[(events["type"] == "WORD"), "relative_correct"] = events.query("type == 'WORD'").groupby('listno')["recalled"].diff().fillna(1.0) == 1
 
         return events
+
+
+    def exclude_subject(self, events, recall_thresh=.95, no_recalls_thresh=1):
+        recalls_by_list = events[(events["type"] == 'WORD')].groupby("listno")["correct"].sum()
+        presentations = len(events[(events["type"] == 'WORD')].index)
+        all_recalls = np.sum(recalls_by_list)
+
+        if all_recalls >= presentations * recall_thresh:
+            return True 
+
+        no_recall_lists = np.sum(recalls_by_list.values == 0)
+        if no_recall_lists > no_recalls_thresh:
+            return True
+
+        # lost focus // single query had unhashable type error, though chained version doesn't
+        focus = events.query("type == 'focus'").query("value == 'on'").query("interval > 0").query("mstime > 0")
+        if len(focus):
+
+            focus_intervals = [pd.Interval(row.mstime - row['interval'], row['mstime']) for i, row in focus.iterrows()]
+            list_intervals  = [pd.Interval(left, right) for left, right in zip(events.query("type == 'WORD' & serialpos == 1")['mstime'], events.query("type == 'END_RECALL'")['mstime'])]
+
+            for list_interval in list_intervals:
+                for focus_interval in focus_intervals:
+                    if list_interval.overlaps(focus_interval):
+                        return True
+
+        return False

@@ -59,7 +59,6 @@ class DataContainer():
         raw["datastring"] = json.loads(raw["datastring"])
         return raw
 
-
     def filter_files_by_subject(self, files, subjects):
         files = [f for f in files if self.code_from_path(f) in subjects]
 
@@ -134,26 +133,26 @@ class DataContainer():
     # TODO: these functions are clunky (moreso than all the other clunky things)
     # would be nice to streamline management of these things (func with file to write as param?)
     def record_excluded(self, subjects: list):
-        EXCLUDED = os.path.join(self.paths_dict['root'], 'EXCLUDED.txt')
+        EXCLUDED = os.path.join(self.root, 'EXCLUDED.txt')
 
         with open(EXCLUDED, 'r') as f:
             exc = [s.strip() for s in f.readlines()]
 
-        exc = set(exc) & set(subjects)
+        exc = list(set(exc) | set(subjects))
 
         with open(EXCLUDED, 'w') as f:
-            f.writelines(exc)
+            f.write("\n".join(exc))
 
     def record_wrote_notes(self, subjects: list):
-        WROTE_NOTES = os.path.join(self.paths_dict['root'], 'WROTE_NOTES.txt')
+        WROTE_NOTES = os.path.join(self.root, 'WROTE_NOTES.txt')
 
         with open(WROTE_NOTES, 'r') as f:
             wn = [s.strip() for s in f.readlines()]
 
-        wn = set(wn) & set(subjects)
+        wn = list(set(wn) | set(subjects))
 
         with open(WROTE_NOTES, 'w') as f:
-            f.writelines(wn)
+            f.write("\n".join(wn))
 
     def save_df(self, df, subject):
         df.to_json(self.path_from_code(subject, cleaned=True))

@@ -1,4 +1,4 @@
-from post_process.cleaning.experiment_cleaning import DataCleaner, EventDecorators
+from post_process.cleaning.experiment_cleaning import DataCleaner 
 from post_process.utils import progress_bar, strip_tags, change_key, filter_keys
 import pandas as pd
 import numpy as np
