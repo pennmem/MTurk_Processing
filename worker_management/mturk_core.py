@@ -18,4 +18,7 @@ def _setup_mturk_client():
             aws_access_key_id=aws_id,
             aws_secret_access_key=aws_key)
 
-client = _setup_mturk_client()
+if 'AWS_KEY' in os.environ:
+    client = _setup_mturk_client()
+else:
+    client = None
