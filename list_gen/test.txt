@@ -1,0 +1,243 @@
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+successful solve!
+var lists = [
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["nurse", "powder", "waiter", "tractor", "guard", "shrub", "leg", "journal", "belly"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["summit", "paper", "cashew", "finger", "rattle", "barley"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["globe", "captive", "razor", "mailbox", "infant", "asia", "butcher", "freckle", "pigeon", "stream", "woman", "leader"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["camel", "pliers", "swamp", "fox", "whistle", "maple", "rebel", "lily", "breast"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["sheriff", "xerox", "relish", "fleet", "glove", "carrot", "marine", "hand", "poison"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["stove", "peanut", "kidney", "mister", "apron", "brick", "lizard", "robot", "dress", "tile", "hero", "ozone"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["gallon", "crater", "patrol", "umpire", "saddle", "branch", "hamper", "loft", "icing", "denim", "expert", "marrow"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["clock", "slug", "picture", "lion", "zebra", "mustard"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["dresser", "lamp", "mildew", "quail", "ankle", "poet", "slope", "cross", "viking"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["cyclone", "sphinx", "bubble", "milk", "guitar", "flag", "peach", "turtle", "onion"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["teacher", "soda", "cabin", "possum", "grill", "jello"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["cousin", "typist", "heart", "banker", "eagle", "sketch", "iceberg", "wrist", "pigment"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["freezer", "rooster", "mars", "highway", "balloon", "concert", "shark", "drug", "tuba", "palace", "army", "jury"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["author", "marsh", "tutu", "popcorn", "hound", "cashier", "foot", "scotch", "lava", "gift", "report", "bucket"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["compass", "harp", "motor", "grave", "spouse", "item", "bureau", "rug", "forest"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["space", "jelly", "piano", "award", "temple", "flower", "cook", "hood", "drink", "rocket", "island", "novel"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["spool", "panther", "coin", "banquet", "river", "fiddle"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["couch", "dragon", "window", "staple", "female", "laser"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["badge", "chest", "donor", "pocket", "yacht", "shirt"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["cottage", "motel", "orchid", "shelf", "flipper", "pebble", "bunny", "dorm", "elbow"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["label", "bathtub", "shelter", "cafe", "victim", "worker", "frame", "helmet", "toaster"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["swimmer", "lagoon", "missile", "human", "banjo", "cellar", "plaid", "dustpan", "thief"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["twig", "salmon", "bank", "perch", "cod", "mask"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["hedge", "server", "twister", "canyon", "drill", "luggage"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["cloud", "survey", "keeper", "burglar", "fireman", "postage"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["robin", "velvet", "leopard", "sibling", "cowboy", "pimple", "fungus", "tourist", "orange", "hiker", "driver", "monster"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["salad", "parrot", "beef", "table", "dolphin", "flute"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["office", "blouse", "trench", "rust", "scalpel", "parsley", "chapel", "mop", "japan", "drawing", "handbag", "lover"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["bison", "virus", "skillet", "garlic", "honey", "pastry", "citrus", "money", "lettuce"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["star", "brook", "garden", "custard", "plate", "judge"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["silk", "mummy", "dancer", "gymnast", "tribe", "raft", "clam", "france", "penguin", "bug", "hawk", "napkin"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["yarn", "partner", "seagull", "crayon", "body", "lumber", "wrench", "racket", "goblin", "turkey", "airport", "ox"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["police", "gazelle", "sparrow", "chemist", "rabbit", "washer", "ketchup", "dust", "mailman"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["cocoon", "smog", "bullet", "tunnel", "pasta", "outfit", "lodge", "robber", "message"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["snake", "bouquet", "crab", "ulcer", "quarter", "atom", "trout", "package", "liver"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["puppy", "casket", "valley", "flask", "girl", "kleenex", "blender", "dentist", "wagon", "egypt", "subway", "oyster"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["lunch", "braces", "church", "student", "match", "grape"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["padding", "canal", "rod", "brother", "dime", "omelet"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["eyelash", "spider", "lapel", "hatchet", "clothes", "atlas"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["spoon", "wife", "paddle", "europe", "coffee", "muffin", "radish", "gavel", "hostess"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["hook", "treat", "candy", "mammal", "sausage", "world", "farmer", "diner", "lady", "pizza", "bike", "gravel"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["actress", "suspect", "vagrant", "termite", "juggler", "record", "country", "marker", "brandy"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["sponge", "outlaw", "curtain", "taxi", "machine", "patient", "friend", "receipt", "inmate", "london", "queen", "ground"]
+	},
+	{
+		conditions: {how: "bwd", when: "post"},
+		words: ["zipper", "ghetto", "antler", "beast", "truck", "kitchen", "daisy", "sunset", "picnic", "film", "market", "witness"]
+	},
+	{
+		conditions: {how: "fwd", when: "pre"},
+		words: ["pistol", "crown", "igloo", "neutron", "donkey", "shorts"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["crib", "tablet", "proton", "box", "salt", "lake"]
+	},
+	{
+		conditions: {how: "fwd", when: "post"},
+		words: ["thread", "slide", "empire", "cricket", "puddle", "arm", "jungle", "venus", "husband", "glass", "flesh", "nomad"]
+	},
+	{
+		conditions: {how: "bwd", when: "pre"},
+		words: ["valve", "snail", "cigar", "pecan", "diver", "widow", "binder", "tart", "uncle", "fruit", "knife", "apple"]
+	},
+]
