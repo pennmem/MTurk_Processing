@@ -4,23 +4,15 @@ import os
 from functools import cached_property
 from glob import glob
 
-class ContainerFactory():
-    @staticmethod
-    def get_container(paths_dict):
-        return DataContainer(paths_dict)
 
 class DataContainer():
-    def __init__(self, paths_dict):
-        self.paths_dict = paths_dict
-
-
-    @property
-    def experiment(self):
-        return self.paths_dict["exp"]
-
-    @property
-    def root(self):
-        return self.paths_dict["root"]
+    def __init__(self, root='/', experiment='', survey='', db='', dictionary='', wordpool=''):
+        self.root = root
+        self.experiment = experiment
+        self.db = db
+        self.survey = survey
+        self._dictionary = dictionary
+        self._wordpool = wordpool
 
     @property
     def raw(self):
@@ -34,22 +26,14 @@ class DataContainer():
     def reports(self):
         return os.path.join(self.root, "reports")
 
-    @property
-    def db(self):
-        return self.paths_dict["db"]
-
-    @property
-    def survey(self):
-        return self.paths_dict["survey"]
-
     @cached_property
     def dictionary(self):
-        with open(self.paths_dict["dictionary"], "r") as f:
+        with open(self._dictionary, "r") as f:
             return [w.strip().upper() for w in f.readlines()]
 
     @cached_property
     def wordpool(self):
-        with open(self.paths_dict["wordpool"], "r") as f:
+        with open(self._wordpool, "r") as f:
             return [w.strip().upper() for w in f.readlines()]
 
     @staticmethod

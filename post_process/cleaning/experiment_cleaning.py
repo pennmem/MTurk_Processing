@@ -12,15 +12,35 @@ from post_process.cleaning.plugin_processing import  html_keyboard_response_node
                                free_sort_node, positional_html_display_node, \
                                math_distractor_node, countdown_node
 
+
 class DataCleaner(object):
+    '''
+    This class defines the operations on raw data needed to create the dataframes expected for analysis.
+    Broadly, the functions in the class fit into two types: 'get' and 'add'. 'get' functions take the raw
+    data from a subject and return a list containing dictionaries of events. For a given experiment, the
+    self.event_types property defines the events to process out of the raw data. 'add' functions implement
+    meta operations on the resulting aggregated data, such as adding list numbers or annotating responses.
+    The self.modifiers property collects the functions to run for a given experiment.
+    '''
+
+
     def __init__(self, data_container):
-        self.data_container = data_container 
+        self.data_container = data_container
 
         self.modifiers = []
         self.event_types = []
 
     @progress_bar()
     def clean(self, force=False, verbose=False):
+        '''
+        The central function that takes raw data and yields a dataframe structured with discrete
+        event types, experimental data, and derived fields. global identifiers, such as subject
+        code, counterbalance, and condition are filled in for all subjects.
+
+        :param force: overwrite existing output data
+        :param verbose: show errors and list excluded subjects on exit
+        :return: None
+        '''
 
         self.process_survey()
 
@@ -188,10 +208,20 @@ class DataCleaner(object):
             if trialdata.get("trial_type", None) == "countdown":
                events.extend(countdown_node(trialdata)) 
 
-        return events 
+        return events
 
+    ####################
+    # Demographic survey is run at the end of every session, with processing code inherited from a previous version
+    # of this library.
+    ####################
 
     def process_survey(self):
+        '''
+        Process survey data for all existing subjects into a single csv file. If subjects report taking notes,
+        this is saved into a file WROTE_NOTES.txt in the experiment data directory.
+
+        :return:
+        '''
         
         outfile = self.data_container.survey
         to_process = self.data_container.get_subject_codes(cleaned=False)
@@ -410,11 +440,19 @@ class DataCleaner(object):
 
         return events
 
-    def add_repeats(self, events):
-        raise NotImplementedError();
+    def add_bad_lists(self, events):
+        raise NotImplementedError("Not yet implemented")
 
     # breaking from naming for descriptiveness
     def expand_conditions(self, events):
+        '''
+        Conditions, from jspsych, are given as a js object that end up as one column. This
+        function inflates each condition into a unique column.
+
+        :param events: pandas dataframe of extracted events
+        :return: modified events dataframe
+        '''
+
         return pd.concat([events.drop(['conditions'], axis=1), events['conditions'].apply(pd.Series)], axis=1)
 
     def correct_recalls(self, events):
@@ -441,9 +479,9 @@ class DataCleaner(object):
 
         return events
 
-    ####################
-    # Functions to generate additional derived files from data
-    ####################     
+    ##########
+    # Event quality assessment
+    ##########
 
     # TODO: lost focus filter
     # TODO: math filter
@@ -460,6 +498,10 @@ class DataCleaner(object):
             return True
 
         return False
+
+    ##########
+    # Utility Functions
+    ##########
 
     def _correct_spelling(self, recall, presented):
         # short circuit if correct
