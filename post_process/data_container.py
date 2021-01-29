@@ -6,34 +6,38 @@ from glob import glob
 
 
 class DataContainer():
-    def __init__(self, root='/', experiment='', survey='', db='', dictionary='', wordpool=''):
+    def __init__(self, root='/', experiment='', survey="survey_responses.csv", db='', dictionary='dictionary.txt', wordpool='wordpool.txt'):
         self.root = root
         self.experiment = experiment
         self.db = db
-        self.survey = survey
+        self._survey = survey
         self._dictionary = dictionary
         self._wordpool = wordpool
 
     @property
     def raw(self):
-        return os.path.join(self.root, "raw")
+        return os.path.join(self.root, self.experiment, "raw")
 
     @property
     def cleaned(self):
-        return os.path.join(self.root, "cleaned")
+        return os.path.join(self.root, self.experiment, "cleaned")
 
     @property
     def reports(self):
-        return os.path.join(self.root, "reports")
+        return os.path.join(self.root, self.experiment, "reports")
+
+    @property
+    def survey(self):
+        return os.path.join(self.root, self.experiment, self._survey)
 
     @cached_property
     def dictionary(self):
-        with open(self._dictionary, "r") as f:
+        with open(os.path.join(self.root, self._dictionary), "r") as f:
             return [w.strip().upper() for w in f.readlines()]
 
     @cached_property
     def wordpool(self):
-        with open(self._wordpool, "r") as f:
+        with open(os.path.join(self.root, self.experiment, self._wordpool), "r") as f:
             return [w.strip().upper() for w in f.readlines()]
 
     @staticmethod
@@ -64,9 +68,6 @@ class DataContainer():
         else:
             return os.path.join(self.raw, f"{code}.json")
 
-    def cleaned(self, sub):
-        return os.path.exists(self.path_from_code(sub, cleaned=True))
-        
     def get_raw_data(self, subjects=None):
         if not subjects == None \
            and not isinstance(subjects, list) \
@@ -78,7 +79,7 @@ class DataContainer():
         if not subjects == None:
             files = self.filter_files_by_subject(files, subjects)
 
-        return [self.read_session_log(f)["datastring"] for f in files] 
+        return (self.read_session_log(f)["datastring"] for f in files)
 
     def get_cleaned_data(self, subjects=None):
         # TODO: catch error to note whether not cleaned data is available
@@ -104,15 +105,11 @@ class DataContainer():
         return pd.concat(all_data) 
 
     def get_session_logs(self, cleaned=False):
-        if not cleaned:
-            return [os.path.join(self.raw, f'{code}.json') for code in self.get_subject_codes(cleaned=cleaned)]
-        else:
-            return [os.path.join(self.cleaned, f'{code}.json') for code in self.get_subject_codes(cleaned=cleaned)]
-
+        base_path = self.cleaned if cleaned else self.raw
+        return glob(os.path.join(base_path, "*.json"))
 
     def get_subject_codes(self, cleaned=False):
-        base_path = self.cleaned if cleaned else self.raw
-        return [os.path.basename(f).split('.')[0] for f in glob(os.path.join(base_path, "*.json"))]
+        return [os.path.basename(f).split('.')[0] for f in self.get_session_logs(cleaned=cleaned)]
 
 
     # TODO: these functions are clunky (moreso than all the other clunky things)
@@ -158,4 +155,4 @@ class DataContainer():
         with open(WROTE_NOTES, 'r') as f:
             notes = [s.strip() for s in f.readlines()]
 
-        return exc + notes
+        return list(set(exc) | set(notes))

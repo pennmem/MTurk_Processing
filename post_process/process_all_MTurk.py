@@ -14,16 +14,14 @@ args = parser.parse_args()
 
 exp = args.experiment
 
-root_dir = os.path.join(args.data_root, exp)
-
 paths_dict = {}
 
-paths_dict["survey"] = os.path.join(root_dir, "survey_responses.csv")
-paths_dict["root"] = root_dir
-paths_dict["experiment"] = exp
+paths_dict["survey"] = "survey_responses.csv"
+paths_dict["root"] = args.data_root
+paths_dict["experiment"] = args.exp
 paths_dict["db"] = args.db_path
-paths_dict["dictionary"] = os.path.join(root_dir, 'dictionary.txt')
-paths_dict["wordpool"] = os.path.join(root_dir, 'wordpool.txt')
+paths_dict["dictionary"] = 'dictionary.txt'
+paths_dict["wordpool"] = 'wordpool.txt'
 
 # Process json into pandas dataframe structures
 data_container = DataContainer(**paths_dict)
