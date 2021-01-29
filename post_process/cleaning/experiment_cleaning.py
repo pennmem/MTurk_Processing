@@ -12,6 +12,28 @@ from post_process.cleaning.plugin_processing import  html_keyboard_response_node
                                free_sort_node, positional_html_display_node, \
                                math_distractor_node, countdown_node
 
+def map_decorator(func):
+    '''
+    Applies a function to the full raw_data structure and aggregates results,
+    since most (but not all) events functions operate one data point at a time
+    and the json loaded format doesn't support selection as a single operation.
+
+    :param func: function to apply to loop of arguments. This function should take
+                 one data point as input, and return a list of the generated events.
+
+    :return:     decorated function that takes a list of data points as argument,
+                 runs func for each datapoint, and aggregates the result.
+    '''
+
+    def decorated(raw_data):
+        aggregate = []
+        for point in raw_data:
+            aggregate.extend(func(point))
+
+        return aggregate
+
+    return decorated
+
 
 class DataCleaner(object):
     '''
@@ -22,7 +44,6 @@ class DataCleaner(object):
     meta operations on the resulting aggregated data, such as adding list numbers or annotating responses.
     The self.modifiers property collects the functions to run for a given experiment.
     '''
-
 
     def __init__(self, data_container):
         self.data_container = data_container
@@ -323,9 +344,17 @@ class DataCleaner(object):
 
         return {"data": s, "header": head}
 
-
     ####################
-    # Functions that deal with derived data structures that adhere to the standard event specification
+    # Functions that deal with derived data structures that adhere to the standard event format
+    # common fields are itemno, listno, serialpos, type, recalled, correct, intrusion, and mstime
+    # as, for some experiments, listno and itemno are derived fields, the order of these functions
+    # can be important. Any dependencies on already set fields should be documented in the add_*
+    # functions themselves.
+    #
+    # In addition, these functions assume a relatively common task structure of prompt -> item presentations -> recall
+    # for each list labelled with a common set of labels (eg WORD and REC_WORD). If your task deviates from this
+    # pattern, you may need to reimplement some of these functions in a derived class or consider altering
+    # other elements of your task/processing to conform with these expectations.
     ####################
 
     def add_itemno(self, events):
@@ -338,7 +367,7 @@ class DataCleaner(object):
     def add_serialpos(self, events):
         '''
         Adds sequential index to WORD events on the same list.
-        Requires list and itemnos fields to be populated.
+        Requires listno and itemno fields to be populated.
         '''
 
         def find_presentation(row):
@@ -441,7 +470,21 @@ class DataCleaner(object):
         return events
 
     def add_bad_lists(self, events):
-        raise NotImplementedError("Not yet implemented")
+        '''
+        uses WORD, REC_END, and focus events. requires the listno field to be populated
+        '''
+
+        focus = events.query("type == 'focus'").query("value == 'on'").query("interval > 0").query("mstime > 0")
+        focus_intervals = [pd.Interval(row.mstime - row['interval'], row['mstime']) for i, row in focus.iterrows()]
+
+        list_interval = pd.Interval(events.query("type == 'WORD' & serialpos == 1")['mstime'].iloc[0],
+                                    events.query("type == 'END_RECALL'")['mstime'].iloc[0])
+
+        for focus_interval in focus_intervals:
+            if list_interval.overlaps(focus_interval):
+                return False
+
+        return True
 
     # breaking from naming for descriptiveness
     def expand_conditions(self, events):
@@ -484,7 +527,6 @@ class DataCleaner(object):
     ##########
 
     # TODO: lost focus filter
-    # TODO: math filter
     def exclude_subject(self, events, recall_thresh=.95, no_recalls_thresh=1):
         recalls_by_list = events[(events["type"] == 'WORD')].groupby("listno")["recalled"].sum()
         presentations = len(events[(events["type"] == 'WORD')].index)
