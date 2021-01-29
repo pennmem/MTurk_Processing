@@ -30,7 +30,6 @@ class RepFRReport(BaseReporter):
                 .to_html(full_html=False, include_plotlyjs=False)
         report.add_fig("Serial Position", fig)
 
-
         # report.add_stat("1p Recall", )
         # report.add_stat("2p Recall", )
         # report.add_stat("3p Recall", )
