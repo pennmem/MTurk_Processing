@@ -7,11 +7,11 @@ from random import shuffle
 import gensim as gs
 import numpy as np
 import pandas as pd
+import time
+
 # import nltk
 # nltk.download('cmudict')
-
 from nltk.corpus import cmudict
-import time
 
 d = cmudict.dict()
 
@@ -88,7 +88,6 @@ class NLP(object):
                 NLP._load_word2vec(NLP.model_path)
 
             NLP.check_vocabulary(wordlist)
-
 
         try:
             arr = np.asarray([[NLP.word_distance(w1, w2) for w2 in wordlist] for w1 in wordlist])
@@ -236,7 +235,7 @@ class ListGenerator(object):
         self.used = []
         self.timeout = timeout
         
-        self.filter = _filter 
+        self.filter = _filter
 
     def reset(self):
         self.used = []
@@ -309,7 +308,7 @@ class SessionGenerator(object):
 
             return js_string
 
-        @property 
+        @property
         def python_string(self):
             pass
 
@@ -321,11 +320,14 @@ class SessionGenerator(object):
             self.conditions = conditions
             self.lists = lists
 
-        def shuffle_words(self):
-            pass
-
-
     def generate_conditions(self, **kwargs):
+        '''
+        Generate sets of conditions for each list from the
+        outer product of all possible passed in conditions.
+        
+        Returns a list of keys and a list of corresponding
+        condition values
+        '''
         conditions = []
         keys = list(kwargs.keys())
         for key in keys:
@@ -339,10 +341,6 @@ class SessionGenerator(object):
         return keys, conditions
 
     def generate_session(self):
-        '''
-        Need to find all long lists first for solution stability, so this is a special case
-        '''
-
         labels, conditions = self.generate_conditions(**self.conditions)
         lists_conditions = list(product(self.lists, conditions)) 
 
@@ -368,7 +366,6 @@ class SessionGenerator(object):
             raise SolutionFailedException("failed to generate list after {} iterations".format(self.timeout))
 
         shuffled_conditions, lists = zip(*session)
-
         return self.Session(lists, shuffled_conditions, labels, var=self.var)
 
 
@@ -382,5 +379,3 @@ def save_list(experiment, condition, id, session, practice=None, format="js"):
                 f.write("\n\n")
 
             f.writelines(session.js_string)
-
-# TODO: load most recent distance matrix
