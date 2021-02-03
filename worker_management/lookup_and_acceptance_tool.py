@@ -85,20 +85,21 @@ def review_assignment(id_db, assignment):
     
     uniqueid = assignment.uniqueid
     data = id_db.get_assignment_record(uniqueid)
+    hit_info = get_hit_information(assignment.hitid)
+    reward = hit_info["HIT"]["Reward"] if hit_info else "HIT expired or not found."
 
     print()
     print("Assignment Data")
     print("---------------")
-    print(f"status: {codes[data.status]}\n"
-          f"mode: {data.mode}\n"
-          f"assignment id: {data.assignmentid}\n"
-          f"HIT id: {data.hitid}\n"
-          f"accepted: {assignment.accepted}\n"
-          f"paid: {assignment.paid}\n"
-          f"excluded: {assignment.excluded}\n"
-          f"value: {get_hit_information(assignment.hitid)['HIT']['Reward']}")
+    print(f"status: {codes[data.status]}")
+    print(f"mode: {data.mode}\n")
+    print(f"assignment id: {data.assignmentid}")
+    print(f"HIT id: {data.hitid}")
+    print(f"accepted: {assignment.accepted}")
+    print(f"paid: {assignment.paid}")
+    print(f"excluded: {assignment.excluded}")
+    print(f"value: {reward}")
     print()
-
     while True:
         accept = input('Enter 1 to ACCEPT, 0 to REJECT, or leave blank to leave unchanged: ').strip()
         print()
@@ -127,8 +128,6 @@ def review_assignment(id_db, assignment):
             break
         else:
             print('Invalid input!')
-
-
 
 if __name__ == "__main__":
     ##########
