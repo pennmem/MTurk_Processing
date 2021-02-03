@@ -99,12 +99,12 @@ class OrderedRecallCleaner(DataCleaner):
         events.loc[(events["type"] == "WORD"), "rt"] = events.query("type == 'WORD'").apply(find_rectime, axis=1)
         events.loc[(events["type"] == "WORD"), "correct"] = (events.query("type == 'WORD'")["serialpos"] == (events.query("type == 'WORD'")["recalled"]))*1
         events.loc[(events["type"] == "WORD"), "distance"] = events.query("type == 'WORD'")["recalled"] - events.query("type == 'WORD'")["serialpos"]
-        events.loc[(events["type"] == "WORD"), "relative_correct"] = events.query("type == 'WORD'").groupby('listno')["recalled"].diff().fillna(1.0) == 1
+        events.loc[(events["type"] == "WORD"), "relative_correct"] = events.query("type == 'WORD'").groupby('listno')["recalled"].diff().fillna(events["recalled"]) == 1
 
         return events
 
 
-    def exclude_subject(self, events, recall_thresh=.95, no_recalls_thresh=1):
+    def exclude_subject(self, events, recall_thresh=.95, no_recalls_thresh=1, allowed_lapse=1000):
         recalls_by_list = events[(events["type"] == 'WORD')].groupby("listno")["correct"].sum()
         presentations = len(events[(events["type"] == 'WORD')].index)
         all_recalls = np.sum(recalls_by_list)
@@ -123,9 +123,13 @@ class OrderedRecallCleaner(DataCleaner):
             focus_intervals = [pd.Interval(row.mstime - row['interval'], row['mstime']) for i, row in focus.iterrows()]
             list_intervals  = [pd.Interval(left, right) for left, right in zip(events.query("type == 'WORD' & serialpos == 1")['mstime'], events.query("type == 'END_RECALL'")['mstime'])]
 
+            bad_lists = 0
             for list_interval in list_intervals:
                 for focus_interval in focus_intervals:
-                    if list_interval.overlaps(focus_interval):
-                        return True
+                    if list_interval.overlaps(focus_interval) and focus_interval.length > allowed_lapse:
+                        bad_lists += 1
+                        break
+
+            if bad_lists > 12: return True 
 
         return False

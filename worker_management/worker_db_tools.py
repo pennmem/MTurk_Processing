@@ -62,7 +62,6 @@ class AcceptanceTracker(Base):
     paid = sql.Column(sql.Boolean, nullable=False, default=False)
     excluded = sql.Column(sql.Boolean, nullable=False, default=False)
     experiment = sql.Column(sql.String(50))
-    # TODO: add experiment name? or run query against multiple tables?
 
 def get_class_by_tablename(tablename):
     """Return class reference mapped to table.

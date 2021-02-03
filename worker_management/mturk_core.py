@@ -21,4 +21,5 @@ def _setup_mturk_client():
 if 'AWS_KEY' in os.environ:
     client = _setup_mturk_client()
 else:
+    print("AWS not configured; Please add the ID and Key to your environment")
     client = None
