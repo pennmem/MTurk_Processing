@@ -4,51 +4,36 @@ import os
 from functools import cached_property
 from glob import glob
 
-class ContainerFactory():
-    @staticmethod
-    def get_container(paths_dict):
-        return DataContainer(paths_dict)
 
 class DataContainer():
-    def __init__(self, paths_dict):
-        self.paths_dict = paths_dict
+    def __init__(self, root='/', experiment='', survey='', db='', dictionary='', wordpool=''):
+        self.root = root
+        self.experiment = experiment
+        self.db = db
+        self.survey = survey
+        self._dictionary = dictionary
+        self._wordpool = wordpool
+
+    @property
+    def raw(self):
+        return os.path.join(self.root, "raw")
+
+    @property
+    def cleaned(self):
+        return os.path.join(self.root, "cleaned")
 
     @property
     def reports(self):
-        return os.path.join(self.paths_dict["root"], "reports")
-
-    @property
-    def experiment(self):
-        return self.paths_dict["exp"]
-
-    @property
-    def root(self):
-        return self.paths_dict["root"]
-    
-    @property
-    def data(self):
-        return os.path.join(self.root, "data")
-
-    @property
-    def events(self):
-        return os.path.join(self.root, "events")
-
-    @property
-    def db(self):
-        return self.paths_dict["db"]
-
-    @property
-    def survey(self):
-        return self.paths_dict["survey"]
+        return os.path.join(self.root, "reports")
 
     @cached_property
     def dictionary(self):
-        with open(self.paths_dict["dictionary"], "r") as f:
+        with open(self._dictionary, "r") as f:
             return [w.strip().upper() for w in f.readlines()]
 
     @cached_property
     def wordpool(self):
-        with open(self.paths_dict["wordpool"], "r") as f:
+        with open(self._wordpool, "r") as f:
             return [w.strip().upper() for w in f.readlines()]
 
     @staticmethod
@@ -75,9 +60,9 @@ class DataContainer():
 
     def path_from_code(self, code, cleaned=False):
         if cleaned:
-            return os.path.join(self.data, f"{code}.json")
+            return os.path.join(self.cleaned, f"{code}.json")
         else:
-            return os.path.join(self.events, f"{code}.json")
+            return os.path.join(self.raw, f"{code}.json")
 
     def cleaned(self, sub):
         return os.path.exists(self.path_from_code(sub, cleaned=True))
@@ -114,19 +99,19 @@ class DataContainer():
         all_data = []
         for f in files:
             with open(f, 'r') as f:
-                all_data.append(pd.read_json(f))            
+                all_data.append(pd.read_json(f))
         
         return pd.concat(all_data) 
 
     def get_session_logs(self, cleaned=False):
         if not cleaned:
-            return [os.path.join(self.events, f'{code}.json') for code in self.get_subject_codes(cleaned=cleaned)]
+            return [os.path.join(self.raw, f'{code}.json') for code in self.get_subject_codes(cleaned=cleaned)]
         else:
-            return [os.path.join(self.data, f'{code}.json') for code in self.get_subject_codes(cleaned=cleaned)]
+            return [os.path.join(self.cleaned, f'{code}.json') for code in self.get_subject_codes(cleaned=cleaned)]
 
 
     def get_subject_codes(self, cleaned=False):
-        base_path = self.data if cleaned else self.events
+        base_path = self.cleaned if cleaned else self.raw
         return [os.path.basename(f).split('.')[0] for f in glob(os.path.join(base_path, "*.json"))]
 
 
@@ -135,10 +120,13 @@ class DataContainer():
     def record_excluded(self, subjects: list):
         EXCLUDED = os.path.join(self.root, 'EXCLUDED.txt')
 
-        with open(EXCLUDED, 'r') as f:
-            exc = [s.strip() for s in f.readlines()]
+        if os.path.exists(EXCLUDED):
+            with open(EXCLUDED, 'r') as f:
+                exc = [s.strip() for s in f.readlines()]
 
-        exc = list(set(exc) | set(subjects))
+            exc = list(set(exc) | set(subjects))
+        else:
+            exc = subjects
 
         with open(EXCLUDED, 'w') as f:
             f.write("\n".join(exc))
@@ -146,10 +134,13 @@ class DataContainer():
     def record_wrote_notes(self, subjects: list):
         WROTE_NOTES = os.path.join(self.root, 'WROTE_NOTES.txt')
 
-        with open(WROTE_NOTES, 'r') as f:
-            wn = [s.strip() for s in f.readlines()]
+        if os.path.exists(WROTE_NOTES):
+            with open(WROTE_NOTES, 'r') as f:
+                wn = [s.strip() for s in f.readlines()]
 
-        wn = list(set(wn) | set(subjects))
+            wn = list(set(wn) | set(subjects))
+        else:
+            wn = subjects
 
         with open(WROTE_NOTES, 'w') as f:
             f.write("\n".join(wn))
