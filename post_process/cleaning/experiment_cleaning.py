@@ -12,11 +12,14 @@ from post_process.cleaning.plugin_processing import  html_keyboard_response_node
                                free_sort_node, positional_html_display_node, \
                                math_distractor_node, countdown_node
 
-def map_decorator(func):
+def trialdata_decorator(func):
     '''
-    Applies a function to the full raw_data structure and aggregates results,
+    Applies a function to the trialdata subfield of the raw structure and aggregates results,
     since most (but not all) events functions operate one data point at a time
     and the json loaded format doesn't support selection as a single operation.
+
+    This decorator may interleave multiple different functions to optimize looping
+    over data.
 
     :param func: function to apply to loop of arguments. This function should take
                  one data point as input, and return a list of the generated events.
@@ -25,10 +28,13 @@ def map_decorator(func):
                  runs func for each datapoint, and aggregates the result.
     '''
 
-    def decorated(raw_data):
+    def decorated(self, raw_data):
         aggregate = []
-        for point in raw_data:
-            aggregate.extend(func(point))
+        trialdata = self.get_trialdata(raw_data)
+        for point in trialdata:
+
+            if ev_data := func(self, point):
+                aggregate.extend(ev_data)
 
         return aggregate
 
@@ -44,6 +50,9 @@ class DataCleaner(object):
     meta operations on the resulting aggregated data, such as adding list numbers or annotating responses.
     The self.modifiers property collects the functions to run for a given experiment.
     '''
+
+    # TODO: this doesn't use the jspsych internal node id's at all, which could be used (per experiment) to
+    # trivially get list, serialpos, and block information
 
     def __init__(self, data_container):
         self.data_container = data_container
@@ -66,6 +75,7 @@ class DataCleaner(object):
         self.process_survey()
 
         raw_data_all_subs = self.data_container.get_raw_data()
+        cleaned_subs = self.data_container.get_subject_codes(cleaned=True)
 
         total = len(raw_data_all_subs)
 
@@ -82,7 +92,7 @@ class DataCleaner(object):
             events_list = []
             subject = self.get_subject(raw_data)
 
-            if self.data_container.cleaned(subject) and not force:
+            if subject in cleaned_subs and not force:
                 continue
 
             try:
@@ -120,12 +130,27 @@ class DataCleaner(object):
         self.data_container.record_excluded(exclude + errors)
         
         if verbose:
+            print("Excluded Subjects:")
             print(exclude)
             print(errors)
 
     ####################
-    # Collection of functions that extract pieces of common format from jspsych 
+    # Collection of functions that extract pieces of common format from jspsych
+    # format. The non-event related of these could arguably join data_container
+    # or a related jspsych data format class,
+    # though their main use is here. Either way, these first functions serve to
+    # avoid locking us too tightly to the jsPsych format for common pieces of
+    # information
     ####################
+
+    def get_datastring(self, raw_data):
+        return raw_data['datastring']
+
+    def get_data(self, raw_data):
+        return self.get_datastring(raw_data)['data']
+
+    def get_trialdata(self, raw_data):
+        return [record['trialdata'] for record in self.get_data(raw_data)]
 
     def get_item_id(self, item):
         if item not in self.data_container.wordpool:
@@ -134,26 +159,19 @@ class DataCleaner(object):
         return self.data_container.wordpool.index(item)
 
     def get_subject(self, raw_data):
-        return raw_data['workerId']
+        return self.get_datastring(raw_data)['workerId']
 
     def get_starttime(self, raw_data):
-        # TODO: logging a start time to the experiment would be much more effective
-        return raw_data["data"][0]["dateTime"] - raw_data["data"][0]["trialdata"]["time_elapsed"]
-
-    def get_trialdata(self, raw_data):
-        return [record['trialdata'] for record in self.get_data(raw_data)]
-
-    def get_data(self, raw_data):
-        return raw_data['data']
+        return self.get_data(raw_data)[0]["dateTime"] - self.get_trialdata(raw_data)[0]["time_elapsed"]
 
     def get_questionnaire(self, raw_data):
-        return raw_data["questiondata"] 
+        return self.get_datastring(raw_data)["questiondata"]
 
     def get_condition(self, raw_data):
-        return raw_data["condition"]
+        return self.get_datastring(raw_data)["condition"]
 
     def get_counterbalance(self, raw_data):
-        return raw_data["counterbalance"]
+        return self.get_datastring(raw_data)["counterbalance"]
 
     def get_version(self, raw_data):
         # TODO: this needs to be grabbed from metadata, as it's not in datastring
@@ -165,38 +183,26 @@ class DataCleaner(object):
     def get_orientation_events(self, raw_data):
         raise NotImplementedError("Experiment specific")
 
-    def get_recall_events(self, raw_data):
+    @trialdata_decorator
+    def get_recall_events(self, record):
         '''
         Break nodes of type free-recall into recall events with timestamps
         '''
         
-        data = raw_data["data"]
-        events = []
-        for record in data:
-            trialdata = record["trialdata"]
-            
-            if trialdata.get("trial_type", None) == "free-recall":
-                events.extend(free_recall_node(trialdata))
+        if record.get("trial_type", None) == "free-recall":
+            return free_recall_node(record)
         
-        return events 
 
-    def get_math_distractor_events(self, raw_data):
+    @trialdata_decorator
+    def get_math_distractor_events(self, record):
         '''
         Break nodes of type math-distractor into individual events with timestamps
         dateTime -> mstime
         trialtype -> type
         '''
 
-        data = raw_data["data"]
-        events = []
-
-        for record in data:
-            trialdata = record["trialdata"]
-
-            if trialdata.get("trial_type", None) == "math-distractor":
-               events.extend(math_distractor_node(trialdata)) 
-
-        return events 
+        if record.get("trial_type", None) == "math-distractor":
+           return math_distractor_node(record)
 
     def get_internal_events(self, raw_data):
         '''
@@ -205,7 +211,7 @@ class DataCleaner(object):
         value -> value
         interval -> interval
         '''
-        events = raw_data['eventdata'] 
+        events = self.get_datastring(raw_data)['eventdata']
         events = [change_key("eventtype", "type", e) for e in events]
         events = [change_key("timestamp", "mstime", e) for e in events]
 
@@ -219,17 +225,10 @@ class DataCleaner(object):
         
         return events
 
-    def get_countdown_events(self, raw_data):
-        data = raw_data["data"]
-        events = []
-
-
-        for record in data:
-            trialdata = record["trialdata"]
-            if trialdata.get("trial_type", None) == "countdown":
-               events.extend(countdown_node(trialdata)) 
-
-        return events
+    @trialdata_decorator
+    def get_countdown_events(self, record):
+        if record.get("trial_type", None) == "countdown":
+           return countdown_node(record)
 
     ####################
     # Demographic survey is run at the end of every session, with processing code inherited from a previous version
@@ -237,6 +236,7 @@ class DataCleaner(object):
     ####################
 
     def process_survey(self):
+        # TODO: survey should be saved to questiondata, rather than data, using recordUnstructuredData
         '''
         Process survey data for all existing subjects into a single csv file. If subjects report taking notes,
         this is saved into a file WROTE_NOTES.txt in the experiment data directory.
@@ -246,6 +246,7 @@ class DataCleaner(object):
         
         outfile = self.data_container.survey
         to_process = self.data_container.get_subject_codes(cleaned=False)
+        s = []
 
         # Load existing survey spreadsheet
         if os.path.exists(outfile):
@@ -385,7 +386,6 @@ class DataCleaner(object):
 
         return events
 
-
     def add_list(self, events):
         '''
         uses END_RECALL events to determine when a new list begins
@@ -464,6 +464,7 @@ class DataCleaner(object):
         return events
 
     def add_list_length(self, events):
+        # could be done with a clever groupby, but not the most evil thing
         for l in events.listno.unique():
             events.loc[events["listno"] == l, "list_length"] = len(events.loc[(events["type"] == 'WORD') & (events["listno"] == l)].index)
 
@@ -473,6 +474,7 @@ class DataCleaner(object):
         '''
         uses WORD, REC_END, and focus events. requires the listno field to be populated
         '''
+        # FIXME: this is a function meant to be applied to a dataframe, not an add_* function
 
         focus = events.query("type == 'focus'").query("value == 'on'").query("interval > 0").query("mstime > 0")
         focus_intervals = [pd.Interval(row.mstime - row['interval'], row['mstime']) for i, row in focus.iterrows()]
@@ -486,7 +488,7 @@ class DataCleaner(object):
 
         return True
 
-    # breaking from naming for descriptiveness
+    # breaking from naming for descriptiveness, this is still a modifier function
     def expand_conditions(self, events):
         '''
         Conditions, from jspsych, are given as a js object that end up as one column. This
@@ -495,14 +497,12 @@ class DataCleaner(object):
         :param events: pandas dataframe of extracted events
         :return: modified events dataframe
         '''
-
         return pd.concat([events.drop(['conditions'], axis=1), events['conditions'].apply(pd.Series)], axis=1)
 
     def correct_recalls(self, events):
         '''
         spellcheck recalls and update item and itemno fields
         '''
-
         def apply_correction(row):
             item = row["item"]
 

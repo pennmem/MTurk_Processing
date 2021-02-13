@@ -25,8 +25,10 @@ class BaseReporter():
     def generate_report(self, subject):
         raise NotImplementedError("This is an interface")
 
-    # def generate_average_report(self):
-    #     raise NotImplementedError("This is an interface")
+    def generate_average_report(self):
+        raise NotImplementedError("This is an interface")
+
+    # TODO: lost focus plot
 
     @progress_bar()
     def run_reporting(self, force=False):
@@ -39,6 +41,7 @@ class BaseReporter():
             try:
                 odir = os.path.join(self.data_container.reports, sub + ".html")
                 os.makedirs(os.path.split(odir)[0], exist_ok=True)
+                # TODO: move io to data_container
                 with open(odir, 'w') as f:
                     f.write(self.generate_report(sub).write_report())
             # except ReportFailedException:
@@ -69,12 +72,10 @@ class Report(object):
     def write_report(self):
         doc, tag, text, line = Doc().ttl()
 
-        # TODO: link barebones css
-
         doc.asis('<!DOCTYPE html>')
         with tag('head'):
             with tag('style'):
-                doc.asis(skeleton)
+                doc.asis(skeleton) # basic CSS
                 doc.asis(normalize)
 
             with tag('script'):

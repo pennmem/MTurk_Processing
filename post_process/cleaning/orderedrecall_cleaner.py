@@ -1,5 +1,4 @@
-from post_process.cleaning.experiment_cleaning import DataCleaner 
-from post_process.utils import progress_bar, strip_tags, change_key, filter_keys
+from post_process.cleaning.experiment_cleaning import DataCleaner, trialdata_decorator
 from post_process.cleaning.plugin_processing import  free_sort_node, positional_html_display_node, hold_keys_check_node
 import pandas as pd
 import numpy as np
@@ -17,47 +16,23 @@ class OrderedRecallCleaner(DataCleaner):
                           self.add_serialpos,
                           self.add_recalled]
 
-    def get_recall_events(self, raw_data):
+    @trialdata_decorator
+    def get_recall_events(self, record):
         # entirely different from normal recall, deals with both final recall and repositioning
-        data = raw_data["data"]
-        events = []
 
-        for record in data:
-            trialdata = record["trialdata"]
+        if record.get("type", None) == "recall":
+            return free_sort_node(record)
 
-            if trialdata.get("type", None) == "recall":
-                node_events = free_sort_node(trialdata)
-                events.extend(node_events)
-
-        return events
-
-    def get_encoding_events(self, raw_data):
+    @trialdata_decorator
+    def get_encoding_events(self, record):
         # much like regular encoding, just also needs vertical position on screen 
-        data = raw_data["data"]
-        events = []
+        if record.get("type", None) == "encoding":
+            return positional_html_display_node(record)
 
-        for record in data:
-            trialdata = record["trialdata"]
-            
-            if trialdata.get("type", None) == "encoding":
-                event = positional_html_display_node(trialdata)
-
-                events.extend(event)
-
-        return events
-
-    def get_hold_keys_events(self, raw_data):
-        data = raw_data["data"]
-        events = []
-
-        for record in data:
-            trialdata = record["trialdata"]
-            
-            if trialdata.get("type", None) == "check":
-                node_events = hold_keys_check_node(trialdata)
-                events.extend(node_events)
-
-        return events
+    @trialdata_decorator
+    def get_hold_keys_events(self, record):
+            if record.get("type", None) == "check":
+                return hold_keys_check_node(record)
 
     def add_itemno(self, events):
 

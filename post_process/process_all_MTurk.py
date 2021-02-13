@@ -18,7 +18,7 @@ paths_dict = {}
 
 paths_dict["survey"] = "survey_responses.csv"
 paths_dict["root"] = args.data_root
-paths_dict["experiment"] = args.exp
+paths_dict["experiment"] = args.experiment
 paths_dict["db"] = args.db_path
 paths_dict["dictionary"] = 'dictionary.txt'
 paths_dict["wordpool"] = 'wordpool.txt'

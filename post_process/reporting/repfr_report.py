@@ -6,6 +6,7 @@ from post_process.utils import pad_to_dense
 import matplotlib.pyplot as mp
 import plotly.express as px
 
+
 class RepFRReport(BaseReporter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

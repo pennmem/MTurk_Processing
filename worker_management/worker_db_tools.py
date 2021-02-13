@@ -47,6 +47,14 @@ class SubjectTracker(Base):
     def as_dict(self):
         return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
 
+class ErrorTracker(Base):
+    __tablename__ = "legit_worker"
+    index = sql.Column(sql.Integer, primary_key=True)
+    amt_worker_id = sql.Column(sql.String(128))
+    assignmentid = sql.Column(sql.String(128))
+    status = sql.Column(sql.String(128))
+    bonus = sql.Column(sql.Float)
+
 class CodeMapping(Base):
     __tablename__ = "master_list"
     anonymousid = sql.Column(sql.Integer, primary_key=True) 
@@ -211,8 +219,12 @@ class DBManager(object):
 
         # update paid and accepted columns
         pre_accepted = session.query(TableClass.uniqueid).filter(TableClass.status.in_([5,7])).subquery()
+        error_paid = session.query(ErrorTable.assignmentid).filter(ErrorTable.status == 'paid').subquery()
 
-        acceptance = Base.metadata.tables['acceptance']
+        session.query(AcceptanceTracker) \
+               .filter(AcceptanceTracker.assignmentid.in_(error_paid)) \
+               .update({"paid": True, "accepted": True}, synchronize_session="fetch")
+
         session.query(AcceptanceTracker) \
                .filter(AcceptanceTracker.uniqueid.in_(pre_accepted)) \
                .update({"paid": True, "accepted": True}, synchronize_session="fetch")
@@ -223,7 +235,7 @@ class DBManager(object):
 
     def update_payment_status(self, uniqueid, paid):
         '''
-        payment recflects payment status set by mturk or manual payment
+        payment reflects payment status set by mturk or manual payment
         '''
         session = self.Session()
 

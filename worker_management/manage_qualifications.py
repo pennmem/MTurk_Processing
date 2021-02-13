@@ -1,6 +1,8 @@
 import boto3
 import os
-from .mturk_core import client
+from worker_management.mturk_core import client
+import argparse
+from worker_management.worker_db_tools import DBManager
 
 
 def get_qualifications(client):
@@ -82,6 +84,12 @@ def create_qualification(client, **kwargs):
         )
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("worker_file", help="File containing workers to add to qualification.")
+    parser.add_argument("--db_path", default=None,
+                        help="Path to experiment database, needed if anonymized id's are given")
+    args = parser.parse_args()
+
     qualifications = get_qualifications(client)
 
     print("Please select a qualification to add to workers")
@@ -94,13 +102,17 @@ if __name__ == "__main__":
     selection = int(input())
     qual_id = None
 
-    if selection < 0 or selection > len(qualifications.keys()):
-        raise Exception("Invalid selection")
-    elif selection < len(qualifications.keys()):
+    while True:
+        selection = int(input())
+        if 0 <= selection < len(qualifications.keys()):
+            break;
+        print("Please enter a valid option.")
+
+    if selection < len(qualifications.keys()):
         name = sorted(qualifications.keys())[selection]
         qual_id = qualifications[name]
     else:
-        print("Please enter (unique) qualification name")
+        print("Please enter a (unique) qualification name")
         name = input()
 
         print("Please enter description")
@@ -114,10 +126,13 @@ if __name__ == "__main__":
         qual = create_qualification(client, **info)
         qual_id = qual["QualificationType"]["QualificationTypeId"]
 
-    print("Please enter the path to the worker file.")
-    worker_file = os.path.abspath(os.path.expanduser(input()))
+    worker_file = os.path.abspath(os.path.expanduser(args.worker_file))
 
     with open(worker_file, 'r') as f:
         workers = [worker.strip() for worker in f.readlines()]
+
+    if args.db_path:
+        id_db = DBManager(args.db_path)
+        workers = [id_db.get_worker_id(w) for w in workers if w.startswith('MTK')]
 
     add_qualification_to_workers(client, workers, qual_id)

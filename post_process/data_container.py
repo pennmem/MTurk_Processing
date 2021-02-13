@@ -1,12 +1,21 @@
 import pandas as pd
 import json
 import os
-from functools import cached_property
+from functools import cached_property, reduce
 from glob import glob
+import importlib.resources as pkg_resources
+import post_process.resources as resources
 
 
 class DataContainer():
-    def __init__(self, root='/', experiment='', survey="survey_responses.csv", db='', dictionary='dictionary.txt', wordpool='wordpool.txt'):
+    ''' Class that wraps file io and management of experiment files. This doesn't retain
+    any information about the internal format of said files aside from their being
+    json files. Users of this class will receive data as a dictionary if reading
+    raw data or as a dataframe for cleaned data, and must validate the internal format
+    themselves.
+    '''
+
+    def __init__(self, root='/', experiment='', survey="survey_responses.csv", db='', dictionary=None, wordpool=None):
         self.root = root
         self.experiment = experiment
         self.db = db
@@ -32,20 +41,34 @@ class DataContainer():
 
     @cached_property
     def dictionary(self):
-        with open(os.path.join(self.root, self._dictionary), "r") as f:
-            return [w.strip().upper() for w in f.readlines()]
+        if self._dictionary:
+            with open(os.path.join(self.root, self._dictionary), "r") as f:
+                return [w.strip().upper() for w in f.readlines()]
+        else:
+            return [w.strip().upper() for w in pkg_resources.read_text(resources, 'webster_dictionary.txt').split()]
 
     @cached_property
     def wordpool(self):
-        with open(os.path.join(self.root, self.experiment, self._wordpool), "r") as f:
-            return [w.strip().upper() for w in f.readlines()]
+        if self._wordpool:
+            with open(os.path.join(self.root, self.experiment, self._wordpool), "r") as f:
+                return [w.strip().upper() for w in f.readlines()]
+        else:
+            return [w.strip().upper() for w in pkg_resources.read_text(resources, 'wordpool.txt').split()]
 
     @staticmethod
     def read_session_log(file):
         with open(file, 'r') as f:
             raw = json.load(f)
 
-        raw["datastring"] = json.loads(raw["datastring"])
+        for key in raw.keys():
+            # server responses may be sent as
+            # json parsed as a string
+
+            try:
+                raw[key] = json.loads(raw[key])
+            except ValueError:
+                continue
+
         return raw
 
     def filter_files_by_subject(self, files, subjects):
@@ -68,22 +91,28 @@ class DataContainer():
         else:
             return os.path.join(self.raw, f"{code}.json")
 
+    def get_subject_codes(self, cleaned=False):
+        return [self.code_from_path(f) for f in self.get_session_logs(cleaned=cleaned)]
+
+    def get_session_logs(self, cleaned=False):
+        base_path = self.cleaned if cleaned else self.raw
+        return glob(os.path.join(base_path, "*.json"))
+
     def get_raw_data(self, subjects=None):
         if not subjects == None \
            and not isinstance(subjects, list) \
            and not isinstance(subjects, tuple):
             subjects = [subjects]
 
-        files = self.get_session_logs()
+        files = self.get_session_logs(cleaned=False)
 
         if not subjects == None:
             files = self.filter_files_by_subject(files, subjects)
 
-        return (self.read_session_log(f)["datastring"] for f in files)
+        return [self.read_session_log(f) for f in files]
 
     def get_cleaned_data(self, subjects=None):
         # TODO: catch error to note whether not cleaned data is available
-        # want specific Exception class for this
 
         if not subjects is None \
            and not isinstance(subjects, list) \
@@ -104,55 +133,38 @@ class DataContainer():
         
         return pd.concat(all_data) 
 
-    def get_session_logs(self, cleaned=False):
-        base_path = self.cleaned if cleaned else self.raw
-        return glob(os.path.join(base_path, "*.json"))
+    def record_collection(self, subjects: list, fname: str):
+        path = os.path.join(self.root, self.experiment, f"{fname}.txt")
+        subjects = set(subjects)
 
-    def get_subject_codes(self, cleaned=False):
-        return [os.path.basename(f).split('.')[0] for f in self.get_session_logs(cleaned=cleaned)]
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                exists = set(s.strip() for s in f.readlines())
 
-
-    # TODO: these functions are clunky (moreso than all the other clunky things)
-    # would be nice to streamline management of these things (func with file to write as param?)
-    def record_excluded(self, subjects: list):
-        EXCLUDED = os.path.join(self.root, 'EXCLUDED.txt')
-
-        if os.path.exists(EXCLUDED):
-            with open(EXCLUDED, 'r') as f:
-                exc = [s.strip() for s in f.readlines()]
-
-            exc = list(set(exc) | set(subjects))
+            union = list(exists | subjects)
         else:
-            exc = subjects
+            union = subjects
 
-        with open(EXCLUDED, 'w') as f:
-            f.write("\n".join(exc))
+        with open(path, 'w') as f:
+            f.write("\n".join(union))
+
+    def record_excluded(self, subjects: list):
+        self.record_collection(subjects, "EXCLUDED")
 
     def record_wrote_notes(self, subjects: list):
-        WROTE_NOTES = os.path.join(self.root, 'WROTE_NOTES.txt')
+        self.record_collection(subjects, "WROTE_NOTES")
 
-        if os.path.exists(WROTE_NOTES):
-            with open(WROTE_NOTES, 'r') as f:
-                wn = [s.strip() for s in f.readlines()]
-
-            wn = list(set(wn) | set(subjects))
+    def read_collection(self, fname: str):
+        path = os.path.join(self.root, self.experiment, f"{fname}.txt")
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                subs = set(s.strip() for s in f.readlines())
+            return subs
         else:
-            wn = subjects
-
-        with open(WROTE_NOTES, 'w') as f:
-            f.write("\n".join(wn))
+            return set()
 
     def save_df(self, df, subject):
         df.to_json(self.path_from_code(subject, cleaned=True))
 
-    def get_bad_subs(self):
-        EXCLUDED = os.path.join(self.root, 'EXCLUDED.txt')
-        WROTE_NOTES = os.path.join(self.root, 'WROTE_NOTES.txt')
-
-        with open(EXCLUDED, 'r') as f:
-            exc = [s.strip() for s in f.readlines()]
-
-        with open(WROTE_NOTES, 'r') as f:
-            notes = [s.strip() for s in f.readlines()]
-
-        return list(set(exc) | set(notes))
+    def get_bad_subs(self, bad_collections: list = ["EXCLUDED", "WROTE_NOTES"]):
+        return reduce(lambda a, b: a | b, map(self.read_collection, bad_collections))

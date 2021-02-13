@@ -21,6 +21,8 @@ class OrderedRecallReport(BaseReporter):
         all_lists = pivot.groupby(["length"]) \
                          .mean()
 
+        ## Report Figures
+
         fig = px.line(all_lists.stack().reset_index(), x='serialpos', y='correct', color='length') \
                 .to_html(full_html=False, include_plotlyjs=False)
         report.add_fig("Serial Position Curve", fig)
@@ -31,6 +33,9 @@ class OrderedRecallReport(BaseReporter):
 
         # # error distances
         # report.add_fig("error_distances", plot_error(get_error(data)))
+
+
+        ## Report Statistics
 
         # conditions
         report.add_stat("Condition", str(data["condition"].values[0]))
