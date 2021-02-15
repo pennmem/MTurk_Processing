@@ -47,13 +47,8 @@ class SubjectTracker(Base):
     def as_dict(self):
         return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
 
-class ErrorTracker(Base):
-    __tablename__ = "legit_worker"
-    index = sql.Column(sql.Integer, primary_key=True)
-    amt_worker_id = sql.Column(sql.String(128))
-    assignmentid = sql.Column(sql.String(128))
-    status = sql.Column(sql.String(128))
-    bonus = sql.Column(sql.Float)
+class ErrorTracker(SubjectTracker):
+    __tablename__ = "error_HIT"
 
 class CodeMapping(Base):
     __tablename__ = "master_list"
@@ -218,8 +213,11 @@ class DBManager(object):
         TableClass = get_class_by_tablename(experiment)
 
         # update paid and accepted columns
+        # 5 = credited, 7 = bonused
         pre_accepted = session.query(TableClass.uniqueid).filter(TableClass.status.in_([5,7])).subquery()
-        error_paid = session.query(ErrorTable.assignmentid).filter(ErrorTable.status == 'paid').subquery()
+        error_paid = session.query(ErrorTracker.datastring).filter(ErrorTracker.status == 7).subquery()
+        print(error_paid)
+        print(pre_accepted)
 
         session.query(AcceptanceTracker) \
                .filter(AcceptanceTracker.assignmentid.in_(error_paid)) \

@@ -41,7 +41,7 @@ def trialdata_decorator(func):
     return decorated
 
 
-class DataCleaner(object):
+class DataCleaner():
     '''
     This class defines the operations on raw data needed to create the dataframes expected for analysis.
     Broadly, the functions in the class fit into two types: 'get' and 'add'. 'get' functions take the raw
@@ -472,21 +472,25 @@ class DataCleaner(object):
 
     def add_bad_lists(self, events):
         '''
-        uses WORD, REC_END, and focus events. requires the listno field to be populated
+        uses WORD, END_RECALL, and focus events. requires the listno and serialpos fields to be populated
         '''
         # FIXME: this is a function meant to be applied to a dataframe, not an add_* function
 
-        focus = events.query("type == 'focus'").query("value == 'on'").query("interval > 0").query("mstime > 0")
-        focus_intervals = [pd.Interval(row.mstime - row['interval'], row['mstime']) for i, row in focus.iterrows()]
+        def check_list(group, allowed_lapse=1000):
+            focus = group.query("type == 'focus'").query("value == 'on'").query("interval > 0").query("mstime > 0")
+            focus_intervals = [pd.Interval(row.mstime - row['interval'], row['mstime']) for i, row in focus.iterrows()]
 
-        list_interval = pd.Interval(events.query("type == 'WORD' & serialpos == 1")['mstime'].iloc[0],
-                                    events.query("type == 'END_RECALL'")['mstime'].iloc[0])
+            list_interval = pd.Interval(group.query("type == 'WORD' & serialpos == 1")['mstime'].iloc[0],
+                                        group.query("type == 'END_RECALL'")['mstime'].iloc[0])
 
-        for focus_interval in focus_intervals:
-            if list_interval.overlaps(focus_interval):
-                return False
+            for focus_interval in focus_intervals:
+                if list_interval.overlaps(focus_interval) and focus_interval.length > allowed_lapse:
+                    return True
 
-        return True
+            return False
+
+        return events.merge(events.groupby(['listno']).apply(check_list) \
+                                  .rename("bad_list").reset_index(), how="outer")
 
     # breaking from naming for descriptiveness, this is still a modifier function
     def expand_conditions(self, events):
@@ -526,7 +530,6 @@ class DataCleaner(object):
     # Event quality assessment
     ##########
 
-    # TODO: lost focus filter
     def exclude_subject(self, events, recall_thresh=.95, no_recalls_thresh=1):
         recalls_by_list = events[(events["type"] == 'WORD')].groupby("listno")["recalled"].sum()
         presentations = len(events[(events["type"] == 'WORD')].index)
