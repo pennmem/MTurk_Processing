@@ -68,6 +68,8 @@ class DataContainer():
                 raw[key] = json.loads(raw[key])
             except ValueError:
                 continue
+            except TypeError:
+                continue
 
         return raw
 

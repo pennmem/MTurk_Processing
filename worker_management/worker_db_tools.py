@@ -216,8 +216,6 @@ class DBManager(object):
         # 5 = credited, 7 = bonused
         pre_accepted = session.query(TableClass.uniqueid).filter(TableClass.status.in_([5,7])).subquery()
         error_paid = session.query(ErrorTracker.datastring).filter(ErrorTracker.status == 7).subquery()
-        print(error_paid)
-        print(pre_accepted)
 
         session.query(AcceptanceTracker) \
                .filter(AcceptanceTracker.assignmentid.in_(error_paid)) \
