@@ -191,7 +191,7 @@ class DBManager(object):
         session = self.Session()
         TableClass = get_class_by_tablename(experiment)
 
-        records = TableClass.query.all()
+        records = session.query(TableClass).all()
 
         session.close()
         return records 
