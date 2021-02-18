@@ -1,0 +1,7 @@
+pyxdameraulevenshtein<1.7
+pybeh
+yattag
+plotly
+numpy
+pandas
+sqlalchemy
