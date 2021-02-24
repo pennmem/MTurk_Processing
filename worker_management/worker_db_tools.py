@@ -7,9 +7,9 @@ Base = declarative_base()
 
 # class BonusTracker(Base):
 #     __tablename__ = "bonus_tracker"
-#     uniqueid = sql.Column(sql.String(50), primary_key=True, nullable=False)
-#     assignmentid = sql.Column(sql.String(50), nullable=False) 
-#     workerid = sql.Column(sql.String(50), sql.ForeignKey("master_list.workerid"), nullable=False)
+#     uniqueid = sql.Column(sql.String(128), primary_key=True, nullable=False)
+#     assignmentid = sql.Column(sql.String(128), nullable=False)
+#     workerid = sql.Column(sql.String(128), sql.ForeignKey("master_list.workerid"), nullable=False)
 #     bonus = sql.Column(sql.Float, default=0)
 #     date_to_send = sql.Column(sql.Date)
 #     date_sent = sql.Column(sql.Date)
@@ -18,27 +18,27 @@ Base = declarative_base()
 
 class SubjectTracker(Base):
     __abstract__ = True
-    assignmentid = sql.Column(sql.String(50), nullable=False) 
-    workerid = sql.Column(sql.String(50), nullable=False)
-    hitid = sql.Column(sql.String(50), nullable=False)
-    ipaddress = sql.Column(sql.String(50), nullable=False)
-    browser = sql.Column(sql.String(50), nullable=False)
-    platform = sql.Column(sql.String(50), nullable=False)
-    language = sql.Column(sql.String(50), nullable=False)
+    assignmentid = sql.Column(sql.String(128), nullable=False)
+    workerid = sql.Column(sql.String(128), nullable=False)
+    hitid = sql.Column(sql.String(128), nullable=False)
+    ipaddress = sql.Column(sql.String(128), nullable=False)
+    browser = sql.Column(sql.String(128), nullable=False)
+    platform = sql.Column(sql.String(128), nullable=False)
+    language = sql.Column(sql.String(128), nullable=False)
     cond = sql.Column(sql.Integer, nullable=False)
     counterbalance = sql.Column(sql.Integer, nullable=False)
-    codeversion = sql.Column(sql.String(50))
+    codeversion = sql.Column(sql.String(128))
     beginhit = sql.Column(sql.Date)
     beginexp = sql.Column(sql.Date)
     endhit = sql.Column(sql.Date)
     bonus = sql.Column(sql.Float)
     status = sql.Column(sql.Integer)
-    mode = sql.Column(sql.String(50))
+    mode = sql.Column(sql.String(128))
     datastring = sql.Column(sql.Text(4294967295))
 
     @declared_attr
     def uniqueid(cls):
-        return sql.Column(sql.String(50), sql.ForeignKey("acceptance.uniqueid"), primary_key=True, nullable=False)
+        return sql.Column(sql.String(128), sql.ForeignKey("acceptance.uniqueid"), primary_key=True, nullable=False)
 
     @declared_attr
     def parent(cls):
@@ -53,18 +53,18 @@ class ErrorTracker(SubjectTracker):
 class CodeMapping(Base):
     __tablename__ = "master_list"
     anonymousid = sql.Column(sql.Integer, primary_key=True) 
-    workerid = sql.Column(sql.String(50), nullable=False)
+    workerid = sql.Column(sql.String(128), nullable=False)
 
 class AcceptanceTracker(Base):
     __tablename__ = "acceptance"
-    uniqueid = sql.Column(sql.String(50), primary_key=True, nullable=False) 
-    assignmentid = sql.Column(sql.String(50), nullable=False) 
-    workerid = sql.Column(sql.String(50), nullable=False)
-    hitid = sql.Column(sql.String(50), nullable=False)
+    uniqueid = sql.Column(sql.String(128), primary_key=True, nullable=False)
+    assignmentid = sql.Column(sql.String(128), nullable=False)
+    workerid = sql.Column(sql.String(128), nullable=False)
+    hitid = sql.Column(sql.String(128), nullable=False)
     accepted = sql.Column(sql.Boolean, nullable=False, default=False)
     paid = sql.Column(sql.Boolean, nullable=False, default=False)
     excluded = sql.Column(sql.Boolean, nullable=False, default=False)
-    experiment = sql.Column(sql.String(50))
+    experiment = sql.Column(sql.String(128))
 
 def get_class_by_tablename(tablename):
     """Return class reference mapped to table.
@@ -93,83 +93,72 @@ class DBManager(object):
     '''
 
     def __init__(self, db_url):
-        # TODO: handle permission error
-
         self.engine = sql.create_engine(db_url)
         self.Session = sql.orm.sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
+    def __enter__(self):
+        self.session = self.Session()
+        return self
+
+    def __exit__(self, exc_type, value, trace):
+        self.session.close()
+        self.session = None
+
 
     def get_complete_subjects(self, experiment):
-        session = self.Session()
-
         complete_statuses = [3, 4, 5, 7]
         TableClass = get_class_by_tablename(experiment)
-        rows = session.query(TableClass).filter(sql.and_(TableClass.status.in_(complete_statuses),\
+        rows = self.session.query(TableClass).filter(sql.and_(TableClass.status.in_(complete_statuses),\
                                                          TableClass.mode.in_(["prolific", "live"]))).all()
-
-        session.close()
         return rows
 
 
     def get_worker_id(self, anonymousid):
-        session = self.Session()
-
-        workerid = session.query(CodeMapping.workerid).filter_by(anonymousid=anonymousid).first()
-
-        session.close()
+        workerid = self.session.query(CodeMapping.workerid).filter_by(anonymousid=anonymousid).first()
 
         # row is None if not existing
         return workerid[0] if workerid else workerid
 
 
     def get_anonymous_id(self, workerid):
-        session = self.Session()
-
-        anonymousid = session.query(CodeMapping.anonymousid).filter_by(workerid=workerid).first()
-
-        session.close()
+        anonymousid = self.session.query(CodeMapping.anonymousid).filter_by(workerid=workerid).first()
 
         # row is None if not existing
         return f"MTK{anonymousid[0]:05d}" if anonymousid else anonymousid
 
 
     def get_assignment_record(self, uniqueid):
-        session = self.Session()
-        assignment = session.query(AcceptanceTracker).get(uniqueid) 
+        assignment = self.session.query(AcceptanceTracker).get(uniqueid)
         TableClass = get_class_by_tablename(assignment.experiment)
-        record = session.query(TableClass).get(uniqueid)
+        record = self.session.query(TableClass).get(uniqueid)
 
-        session.close()
-        return record 
+        return record
 
 
     def get_assignments_for_worker(self, workerid):
-        session = self.Session()
-        assignments = session.query(AcceptanceTracker).filter(AcceptanceTracker.workerid == workerid).all()
+        assignments = self.session.query(AcceptanceTracker).filter(AcceptanceTracker.workerid == workerid).all()
 
-        session.close()
         return assignments
 
 
     def add_workers_from_experiment(self, experiment):
-        session = self.Session()
 
         TableClass = get_class_by_tablename(experiment)
         master_list = Base.metadata.tables['master_list']
         acceptance = Base.metadata.tables['acceptance']
 
 
-        new_subjects = session.query(TableClass.workerid) \
+        new_subjects = self.session.query(TableClass.workerid) \
                               .filter(sql.and_(~sql.sql.exists() \
                                                    .where(CodeMapping.workerid == TableClass.workerid),\
                                                TableClass.mode.in_(["live", "prolific"])))
         
-        session.execute(master_list.insert() \
+        self.session.execute(master_list.insert() \
                                    .from_select(names=['workerid'], \
                                                 select=new_subjects))
 
-        new_subjects = session.query(TableClass.workerid,
+        new_subjects = self.session.query(TableClass.workerid,
                                      TableClass.uniqueid, 
                                      TableClass.assignmentid, 
                                      TableClass.hitid, 
@@ -179,67 +168,57 @@ class DBManager(object):
                                                TableClass.mode.in_(["live", "prolific"])))
 
 
-        session.execute(acceptance.insert() \
+        self.session.execute(acceptance.insert() \
                                   .from_select(names=['workerid', 'uniqueid', 'assignmentid', 'hitid', 'experiment'], \
                                                select=new_subjects, include_defaults=True))
 
 
-        session.commit()
-        session.close()
+        self.session.commit()
 
     def get_records_for_task(self, experiment):
-        session = self.Session()
         TableClass = get_class_by_tablename(experiment)
+        records = self.session.query(TableClass).all()
 
-        records = session.query(TableClass).all()
-
-        session.close()
-        return records 
+        return records
 
 
     def get_assignments_for_task(self, experiment):
         session = self.Session()
         TableClass = get_class_by_tablename(experiment)
 
-        assignments = session.query(AcceptanceTracker).filter(TableClass.workerid == AcceptanceTracker.workerid).all()
+        assignments = self.session.query(AcceptanceTracker).filter(TableClass.workerid == AcceptanceTracker.workerid).all()
         
-        session.close()
-
         return assignments
 
 
     def update_acceptance_tracker(self, experiment):
-        session = self.Session()
         TableClass = get_class_by_tablename(experiment)
 
         # update paid and accepted columns
         # 5 = credited, 7 = bonused
-        pre_accepted = session.query(TableClass.uniqueid).filter(TableClass.status.in_([5,7])).subquery()
-        error_paid = session.query(ErrorTracker.datastring).filter(ErrorTracker.status == 7).subquery()
+        pre_accepted = self.session.query(TableClass.uniqueid).filter(TableClass.status.in_([5,7])).subquery()
+        error_paid = self.session.query(ErrorTracker.datastring).filter(ErrorTracker.status == 7).subquery()
 
-        session.query(AcceptanceTracker) \
+        self.session.query(AcceptanceTracker) \
                .filter(AcceptanceTracker.assignmentid.in_(error_paid)) \
                .update({"paid": True, "accepted": True}, synchronize_session="fetch")
 
-        session.query(AcceptanceTracker) \
+        self.session.query(AcceptanceTracker) \
                .filter(AcceptanceTracker.uniqueid.in_(pre_accepted)) \
                .update({"paid": True, "accepted": True}, synchronize_session="fetch")
 
         session.commit()
-        session.close()
 
 
     def update_payment_status(self, uniqueid, paid):
         '''
         payment reflects payment status set by mturk or manual payment
         '''
-        session = self.Session()
 
-        if session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
-            session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"paid": paid})
+        if self.session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
+            self.session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"paid": paid})
 
-        session.commit()
-        session.close()
+        self.session.commit()
 
 
     def update_acceptance_status(self, uniqueid, accept):
@@ -247,22 +226,15 @@ class DBManager(object):
         acceptance reflects the payment status set by psiturk
         '''
 
-        session = self.Session()
+        if self.session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
+            sel.session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"accepted": accept})
 
-        if session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
-            session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"accepted": accept})
-
-        session.commit()
-        session.close()
+        self.session.commit()
 
 
     def update_excluded_status(self, uniqueid, exclude):
 
-        session = self.Session()
-
-        if session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
-            session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"excluded": exclude})
+        if self.session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
+            self.session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"excluded": exclude})
 
         session.commit()
-        session.close()
-

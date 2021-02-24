@@ -132,7 +132,7 @@ if __name__ == "__main__":
         workers = [worker.strip() for worker in f.readlines()]
 
     if args.db_path:
-        id_db = DBManager(args.db_path)
-        workers = [id_db.get_worker_id(w) for w in workers if w.startswith('MTK')]
+        with DBManager(args.db_path) as id_db:
+            workers = [id_db.get_worker_id(w) for w in workers if w.startswith('MTK')]
 
     add_qualification_to_workers(client, workers, qual_id)
