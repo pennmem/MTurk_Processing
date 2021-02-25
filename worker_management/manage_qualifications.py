@@ -104,8 +104,9 @@ if __name__ == "__main__":
 
     while True:
         selection = int(input())
-        if 0 <= selection < len(qualifications.keys()):
-            break;
+        if 0 <= selection <= len(qualifications.keys()):
+            break
+
         print("Please enter a valid option.")
 
     if selection < len(qualifications.keys()):
@@ -113,10 +114,10 @@ if __name__ == "__main__":
         qual_id = qualifications[name]
     else:
         print("Please enter a (unique) qualification name")
-        name = input()
+        name = input().strip()
 
         print("Please enter description")
-        description = input()
+        description = input().strip()
 
         info = {"Name": name, 
                 "Description": description, 
