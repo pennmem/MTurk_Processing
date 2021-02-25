@@ -207,7 +207,7 @@ class DBManager(object):
                .filter(AcceptanceTracker.uniqueid.in_(pre_accepted)) \
                .update({"paid": True, "accepted": True}, synchronize_session="fetch")
 
-        session.commit()
+        self.session.commit()
 
 
     def update_payment_status(self, uniqueid, paid):
@@ -227,7 +227,7 @@ class DBManager(object):
         '''
 
         if self.session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
-            sel.session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"accepted": accept})
+            self.session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"accepted": accept})
 
         self.session.commit()
 
@@ -237,4 +237,4 @@ class DBManager(object):
         if self.session.query(AcceptanceTracker.uniqueid).filter(AcceptanceTracker.uniqueid == uniqueid).scalar() is not None:
             self.session.query(AcceptanceTracker).filter(AcceptanceTracker.uniqueid == uniqueid).update({"excluded": exclude})
 
-        session.commit()
+        self.session.commit()
