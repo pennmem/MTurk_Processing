@@ -43,7 +43,7 @@ class SubjectTracker(Base):
     @declared_attr
     def parent(cls):
         return relationship("AcceptanceTracker")
-    
+
     def as_dict(self):
         return {c.name: str(getattr(self, c.name)) for c in self.__table__.columns}
 
@@ -75,7 +75,7 @@ def get_class_by_tablename(tablename):
     for c in Base._decl_class_registry.values():
         if hasattr(c, '__tablename__') and c.__tablename__ == tablename:
             return c
-    
+
     return type(tablename, (SubjectTracker,), {'__tablename__': tablename})
 
 
