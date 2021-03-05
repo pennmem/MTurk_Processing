@@ -6,7 +6,6 @@ import csv
 import os
 from pyxdameraulevenshtein import damerau_levenshtein_distance_ndarray
 from post_process.utils import progress_bar, strip_tags, change_key, filter_keys
-from functools import wraps
 
 from post_process.cleaning.plugin_processing import  html_keyboard_response_node, hold_keys_node, \
                                hold_keys_check_node, free_recall_node, \
@@ -29,7 +28,6 @@ def trialdata_decorator(func):
                  runs func for each datapoint, and aggregates the result.
     '''
 
-    @wraps(func)
     def decorated(self, raw_data):
         aggregate = []
         trialdata = self.get_trialdata(raw_data)

@@ -26,6 +26,7 @@ class RepFRCleaner(DataCleaner):
 
     @trialdata_decorator
     def get_encoding_events(self, record):
+
         if record.get("type", None) == "encoding":
             node_events = hold_keys_node(record)
             return node_events

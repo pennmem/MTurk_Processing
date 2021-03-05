@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     while True:
         selection = int(input())
-        if 0 <= selection < len(qualifications.keys()):
+        if 0 <= selection <= len(qualifications.keys()):
             break;
         print("Please enter a valid option.")
 
@@ -129,10 +129,11 @@ if __name__ == "__main__":
     worker_file = os.path.abspath(os.path.expanduser(args.worker_file))
 
     with open(worker_file, 'r') as f:
+        # TODO: throw a warning
         workers = [worker.strip() for worker in f.readlines()]
 
     if args.db_path:
         id_db = DBManager(args.db_path)
-        workers = [id_db.get_worker_id(w) for w in workers if w.startswith('MTK')]
+        workers = [id_db.get_worker_id(w) if w.startswith('MTK') else w for w in workers]
 
     add_qualification_to_workers(client, workers, qual_id)

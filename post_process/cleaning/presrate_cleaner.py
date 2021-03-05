@@ -7,8 +7,6 @@ class PresRateCleaner(DataCleaner):
     def __init__(self, data_container):
         super().__init__(data_container)
 
-        # TODO: hack is unfortunate, make at least configurable
-
         self.event_types = [self.get_internal_events,
                             self.get_encoding_events, 
                             self.get_math_distractor_events,
@@ -19,6 +17,7 @@ class PresRateCleaner(DataCleaner):
                           self.correct_recalls,
                           self.add_recalled,
                           self.add_intrusion]
+
 
     def get_encoding_events(self, raw_data):
         data = raw_data["data"]
@@ -38,7 +37,6 @@ class PresRateCleaner(DataCleaner):
                 event["type"] = "WORD"
                 event["item"] = strip_tags(trialdata["stimulus"])
                 event["itemno"] = self.get_item_id(event["item"])
-                
 
                 events.append(event)
 

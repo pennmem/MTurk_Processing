@@ -52,7 +52,7 @@ class ErrorTracker(SubjectTracker):
 
 class CodeMapping(Base):
     __tablename__ = "master_list"
-    anonymousid = sql.Column(sql.Integer, default=-1, autoincrement=True, primary_key=True) 
+    anonymousid = sql.Column(sql.Integer, default=-1, autoincremnt=True, primary_key=True) 
     workerid = sql.Column(sql.String(50), nullable=False)
 
 class AcceptanceTracker(Base):

@@ -56,6 +56,7 @@ def load_psiturk_data(data_container, force=False, verbose=False):
         # Only attempt to write a JSON file if the participant has data and does not already have a JSON file
         if force or not os.path.exists(datafile_path):
             with open(datafile_path, 'w') as f:
+                # TODO: include psiturk metadata
                 json.dump(row.as_dict(), f)
 
 def _read_raw_json(files):

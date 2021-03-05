@@ -92,7 +92,7 @@ def review_assignment(id_db, assignment):
     print("Assignment Data")
     print("---------------")
     print(f"status: {codes[data.status]}")
-    print(f"mode: {data.mode}\n")
+    print(f"mode: {data.mode}")
     print(f"assignment id: {data.assignmentid}")
     print(f"HIT id: {data.hitid}")
     print(f"accepted: {assignment.accepted}")
