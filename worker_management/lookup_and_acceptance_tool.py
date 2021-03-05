@@ -141,14 +141,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    try:
-        id_db = DBManager(args.database)
-    except IOError:
-        raise Exception('Unable to load ID map. You may not have permission to access it.')
+    with DBManager(args.database) as id_db:
+        if args.experiments:
+            for exp in args.experiments:
+                id_db.add_workers_from_experiment(exp)
+                id_db.update_acceptance_tracker(exp)
 
-    if args.experiments:
-        for exp in args.experiments:
-            id_db.add_workers_from_experiment(exp)
-            id_db.update_acceptance_tracker(exp)
-
-    lookup_and_acceptance_tool(id_db)
+        lookup_and_acceptance_tool(id_db)
