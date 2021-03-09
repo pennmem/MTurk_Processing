@@ -8,7 +8,7 @@ class PresRateCleaner(DataCleaner):
         super().__init__(data_container)
 
         self.event_types = [self.get_internal_events,
-                            self.get_encoding_events, 
+                            self.get_encoding_events,
                             self.get_math_distractor_events,
                             self.get_recall_events]
 
@@ -47,12 +47,12 @@ class PresRateCleaner(DataCleaner):
         '''
         Break nodes of type free-recall into recall events with timestamps
         '''
-        
+
         data = raw_data["data"]
         events = []
         for record in data:
             trialdata = record["trialdata"]
-            
+
             if trialdata.get("trial_type", None) == "free-recall":
                 recwords = trialdata["recwords"] 
                 rts = trialdata["rt"]
@@ -60,16 +60,17 @@ class PresRateCleaner(DataCleaner):
                 if len(recwords) == 0:
                     rts = [0]
                     recwords = [""]
-                
+
                 for w, t in zip(recwords, rts):
                     event = {}
-                        
+
                     # hack using hardcoded experiment times
                     # from task design. If this is going to be
                     # an approach in the future, we need a way
                     # to get the experiment information into this pipeline
-                    
-                    event["mstime"] = trialdata["time_elapsed"] - 75000 + t 
+                    if "mstime" in event:
+                        event["mstime"] = trialdata["time_elapsed"] - 75000 + t 
+
                     event["rt"] = t
                     event["type"] = "REC_WORD"
                     event["item"] = w.upper() 
