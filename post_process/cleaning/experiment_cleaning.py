@@ -4,7 +4,7 @@ import numpy as np
 import json
 import csv
 import os
-from pyxdameraulevenshtein import damerau_levenshtein_distance_ndarray
+from pyxdameraulevenshtein import damerau_levenshtein_distance_seqs
 from post_process.utils import progress_bar, strip_tags, change_key, filter_keys
 
 from post_process.cleaning.plugin_processing import  html_keyboard_response_node, hold_keys_node, \
@@ -71,8 +71,6 @@ class DataCleaner():
         :param verbose: show errors and list excluded subjects on exit
         :return: None
         '''
-
-        self.process_survey()
 
         raw_data_all_subs = self.data_container.get_raw_data()
         cleaned_subs = self.data_container.get_subject_codes(cleaned=True)
@@ -144,7 +142,8 @@ class DataCleaner():
     ####################
 
     def get_datastring(self, raw_data):
-        return raw_data['datastring']
+        # return raw_data['datastring']
+        return raw_data
 
     def get_data(self, raw_data):
         return self.get_datastring(raw_data)['data']
@@ -554,8 +553,12 @@ class DataCleaner():
             return recall
 
         # edit distance to each item in the pool and dictionary
-        dist_to_pool = damerau_levenshtein_distance_ndarray(recall, np.asarray(presented))
-        dist_to_dict = damerau_levenshtein_distance_ndarray(recall, np.asarray(self.data_container.dictionary))
+        # dist_to_pool = damerau_levenshtein_distance_ndarray(recall, np.asarray(presented))
+        # dist_to_dict = damerau_levenshtein_distance_ndarray(recall, np.asarray(self.data_container.dictionary))
+
+        # fixing to work with update https://github.com/gfairchild/pyxDamerauLevenshtein/issues/30
+        dist_to_pool = np.array(damerau_levenshtein_distance_seqs(recall, np.asarray(presented)))
+        dist_to_dict = np.array(damerau_levenshtein_distance_seqs(recall, np.asarray(self.data_container.dictionary)))
     
         # position in distribution of dist_to_dict
         ptile = np.true_divide(sum(dist_to_dict <= np.amin(dist_to_pool)), dist_to_dict.size)

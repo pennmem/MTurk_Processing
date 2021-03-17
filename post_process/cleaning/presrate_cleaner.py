@@ -10,7 +10,8 @@ class PresRateCleaner(DataCleaner):
         self.event_types = [self.get_internal_events,
                             self.get_encoding_events,
                             self.get_math_distractor_events,
-                            self.get_recall_events]
+                            # self.get_recall_events
+                            self.get_recall_events_hack]
 
         self.modifiers = [self.add_list,
                           self.add_serialpos,
@@ -32,6 +33,7 @@ class PresRateCleaner(DataCleaner):
 
                 event = filter_keys(wanted_keys, trialdata)
 
+                event["trial_index"] = trialdata["trial_index"]
                 event["mstime"] = trialdata["time_elapsed"]
                 event["type"] = "WORD"
                 event["item"] = strip_tags(trialdata["stimulus"])
@@ -70,6 +72,7 @@ class PresRateCleaner(DataCleaner):
                     if "mstime" in event:
                         event["mstime"] = trialdata["time_elapsed"] - 75000 + t 
 
+                    event["trial_index"] = trialdata["trial_index"]
                     event["rt"] = t
                     event["type"] = "REC_WORD"
                     event["item"] = w.upper() 
