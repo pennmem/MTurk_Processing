@@ -10,8 +10,9 @@ class PresRateCleaner(DataCleaner):
         self.event_types = [self.get_internal_events,
                             self.get_encoding_events,
                             self.get_math_distractor_events,
-                            # self.get_recall_events
-                            self.get_recall_events_hack]
+                            self.get_recall_events
+                            # self.get_recall_events_hack
+                            ]
 
         self.modifiers = [self.add_list,
                           self.add_serialpos,
