@@ -7,6 +7,25 @@ from ..utils import progress_bar, strip_tags, change_key, filter_keys
 # data to the node that we want to pick up, but unwanted keys should be constant
 # (ie trial index)
 
+#audio-keyboard-response
+def audio_keyboard_response_node(trialdata):
+    # TODO: flip to unwanted keys
+    wanted_keys = ["block", "length", "pr", "conditions"]
+
+    event = {}
+
+    event = filter_keys(wanted_keys, trialdata)
+    event['phase'] = trialdata['phase']
+    event['listtype'] = trialdata['listtype']
+    event["mstime"] = trialdata["time_elapsed"]
+    event["type"] = "WORD"
+    item = strip_tags(trialdata["stimulus"])
+    item = item.strip('/static/sound/')
+    item = item.strip('.wav')
+    event['item'] = item
+
+    return (event, )
+
 #html-keyboard-response
 def html_keyboard_response_node(trialdata):
     # TODO: flip to unwanted keys
@@ -15,7 +34,7 @@ def html_keyboard_response_node(trialdata):
     event = {}
 
     event = filter_keys(wanted_keys, trialdata)
-
+    event['phase'] = trialdata['phase']
     event["mstime"] = trialdata["time_elapsed"]
     event["type"] = "WORD"
     event["item"] = strip_tags(trialdata["stimulus"])
@@ -64,13 +83,18 @@ def free_recall_node(trialdata):
     event = {}
     event["type"] = "START_RECALL"
     event["mstime"] = time
+    event["phase"] = trialdata.get('phase')
+    event['recall type'] = trialdata['recall_type']
+    event["listtype"] = trialdata.get('listtype')
     events.append(event)
 
     for w, t in zip(recwords, rts):
         event = {}
 
         event["mstime"] = time + t
-        
+        event["phase"] = trialdata.get('phase')
+        event['recall type'] = trialdata['recall_type']
+        event["listtype"] = trialdata.get('listtype')
         event["rt"] = t
         event["type"] = "REC_WORD"
         event["item"] = w.upper() 
@@ -80,7 +104,10 @@ def free_recall_node(trialdata):
 
     event = {}
     event["type"] = "END_RECALL"
-    event["mstime"] = trialdata["time_elapsed"] 
+    event["mstime"] = trialdata["time_elapsed"]
+    event["phase"] = trialdata.get('phase')
+    event['recall type'] = trialdata['recall_type']
+    event["listtype"] = trialdata.get('listtype')
     events.append(event)
     
     return events
