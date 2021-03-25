@@ -74,7 +74,11 @@ class DataCleaner():
         :return: None
         '''
 
-        self.process_survey()
+        # in case there's no survey (like class experiments)
+        try:
+            self.process_survey()
+        except:
+            continue
 
         raw_data_all_subs = self.data_container.get_raw_data()
         cleaned_subs = self.data_container.get_subject_codes(cleaned=True)
