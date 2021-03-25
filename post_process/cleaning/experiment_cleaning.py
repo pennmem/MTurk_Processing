@@ -63,7 +63,7 @@ class DataCleaner():
         self.event_types = []
 
     @progress_bar()
-    def clean(self, force=False, verbose=False):
+    def clean(self, force=False, verbose=False, survey=True):
         '''
         The central function that takes raw data and yields a dataframe structured with discrete
         event types, experimental data, and derived fields. global identifiers, such as subject
@@ -74,8 +74,11 @@ class DataCleaner():
         :return: None
         '''
 
-        self.process_survey()
-
+        try:
+            self.process_survey()
+        except:
+            print('no survey')
+        
         raw_data_all_subs = self.data_container.get_raw_data()
         cleaned_subs = self.data_container.get_subject_codes(cleaned=True)
 
@@ -262,7 +265,7 @@ class DataCleaner():
             to_process = [code for code in to_process if code not in already_processed]
 
         for subj in to_process:
-            data,  = self.data_container.get_raw_data(subj)
+            data, = self.data_container.get_raw_data(subj)
             cond = self.get_condition(data)
 
             try:
