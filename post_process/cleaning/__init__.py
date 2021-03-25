@@ -7,7 +7,7 @@ from .repfr_cleaner import RepFRCleaner
 
 
 def get_cleaner(data_container):
-    if data_container.experiment == "serial_recall_2":
+    if data_container.experiment in ["serial_recall_2", "class_srv2"]::
         return SerialRecCleaner(data_container) 
 
     elif data_container.experiment == "presrate":
