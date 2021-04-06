@@ -4,8 +4,7 @@ import numpy as np
 import json
 import csv
 import os
-from pyxdameraulevenshtein import damerau_levenshtein_distance_seqs
-
+from pyxdameraulevenshtein import damerau_levenshtein_distance_ndarray
 from post_process.utils import progress_bar, strip_tags, change_key, filter_keys
 from functools import wraps
 
@@ -559,10 +558,8 @@ class DataCleaner():
             return recall
 
         # edit distance to each item in the pool and dictionary
-        # TODO: Cleanup -- awkward conversions to list/array in order to handle breaking changes to damerau_levenshtein... (1.7.0) 
-        # see https://github.com/gfairchild/pyxDamerauLevenshtein/issues/30 and https://github.com/gfairchild/pyxDamerauLevenshtein/blob/master/CHANGES.md
-        dist_to_pool = np.array(damerau_levenshtein_distance_seqs(recall, list(np.asarray(presented))))
-        dist_to_dict = np.array(damerau_levenshtein_distance_seqs(recall, list(np.asarray(self.data_container.dictionary))))
+        dist_to_pool = damerau_levenshtein_distance_ndarray(recall, np.asarray(presented))
+        dist_to_dict = damerau_levenshtein_distance_ndarray(recall, np.asarray(self.data_container.dictionary))
     
         # position in distribution of dist_to_dict
         ptile = np.true_divide(sum(dist_to_dict <= np.amin(dist_to_pool)), dist_to_dict.size)
