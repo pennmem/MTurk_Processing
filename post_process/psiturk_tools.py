@@ -50,11 +50,12 @@ def load_psiturk_data(data_container, force=False, verbose=False):
 
     for row in complete_subs:
 
-        # Get subject ID
-        with DBManager(data_container.db) as db:
-            subj_id = db.get_anonymous_id(row.workerid)
+        if not data_container.class_exp:
+            # Get subject ID
+            with DBManager(data_container.db) as db:
+                subj_id = db.get_anonymous_id(row.workerid)
 
-        row = anonymize_row(row, row.workerid, subj_id)
+            row = anonymize_row(row, row.workerid, subj_id)
         datafile_path = data_container.path_from_code(subj_id)
 
         # Only attempt to write a JSON file if the participant has data and does not already have a JSON file
