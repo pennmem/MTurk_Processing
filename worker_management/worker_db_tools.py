@@ -160,11 +160,12 @@ class DBManager(object):
         acceptance = Base.metadata.tables['acceptance']
 
 
-        new_subjects = self.session.query(TableClass.workerid) \
+        new_subjects = self.session.query(TableClass.workerid, TableClass.mode) \
                               .filter(sql.and_(~sql.sql.exists() \
                                                    .where(CodeMapping.workerid == TableClass.workerid),\
                                                TableClass.mode.in_(modes)))
 
+        print(master_list)
         for subject in new_subjects:
             print('sub')
             print(subject)
