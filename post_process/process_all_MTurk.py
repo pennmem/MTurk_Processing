@@ -22,6 +22,7 @@ paths_dict["experiment"] = args.experiment
 paths_dict["db"] = args.db_path
 paths_dict["dictionary"] = 'dictionary.txt'
 paths_dict["wordpool"] = 'wordpool.txt'
+paths_dict["class_exp"] = 'class_' in exp
 
 # Process json into pandas dataframe structures
 data_container = DataContainer(**paths_dict)

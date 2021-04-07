@@ -106,10 +106,16 @@ class DBManager(object):
         self.session = None
 
 
-    def get_complete_subjects(self, experiment):
-        complete_statuses = [3, 4, 5, 7]
+    def get_complete_subjects(self, experiment, class_exp=False):
+        if class_exp:
+            complete_statuses=[2, 3, 4, 5, 7]
+        else:
+            complete_statuses=[3, 4, 5, 7]
         TableClass = get_class_by_tablename(experiment)
-        rows = self.session.query(TableClass).filter(sql.and_(TableClass.status.in_(complete_statuses),\
+        if class_exp:
+            rows = self.session.query(TableClass).filter(TableClass.status.in_(complete_statuses)).all()
+        else:
+            rows = self.session.query(TableClass).filter(sql.and_(TableClass.status.in_(complete_statuses),\
                                                          TableClass.mode.in_(["prolific", "live"]))).all()
         return rows
 

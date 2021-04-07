@@ -15,10 +15,11 @@ class DataContainer():
     themselves.
     '''
 
-    def __init__(self, root='/', experiment='', survey="survey_responses.csv", db='', dictionary=None, wordpool=None):
+    def __init__(self, root='/', experiment='', survey="survey_responses.csv", db='', dictionary=None, wordpool=None, class_exp=False):
         self.root = root
         self.experiment = experiment
         self.db = db
+        self.class_exp = class_exp
         self._survey = survey
         self._dictionary = dictionary
         self._wordpool = wordpool
