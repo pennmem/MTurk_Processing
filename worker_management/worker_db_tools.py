@@ -173,7 +173,7 @@ class DBManager(object):
             print(subject)
             sub_list.append(subject)
 
-        print(np.array(sub_list).shape)
+        print(np.array(sub_list))
         print(np.unique(np.array(sub_list)).shape)
 
         new_subjects = self.session.query(TableClass.workerid) \
