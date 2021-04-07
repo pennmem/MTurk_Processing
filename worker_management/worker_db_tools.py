@@ -178,6 +178,18 @@ class DBManager(object):
                                                    .where(AcceptanceTracker.uniqueid == TableClass.uniqueid),
                                                TableClass.mode.in_(modes)))
 
+        for subject in new_subjects:
+            print('sub ' + subject)
+
+        new_subjects = self.session.query(TableClass.workerid,
+                                     TableClass.uniqueid, 
+                                     TableClass.assignmentid, 
+                                     TableClass.hitid, 
+                                     sql.literal(experiment)) \
+                              .filter(sql.and_(~sql.sql.exists() \
+                                                   .where(AcceptanceTracker.uniqueid == TableClass.uniqueid),
+                                               TableClass.mode.in_(modes)))
+
 
         self.session.execute(acceptance.insert() \
                                   .from_select(names=['workerid', 'uniqueid', 'assignmentid', 'hitid', 'experiment'], \
