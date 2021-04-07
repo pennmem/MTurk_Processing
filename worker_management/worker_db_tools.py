@@ -166,7 +166,8 @@ class DBManager(object):
                                                TableClass.mode.in_(modes)))
 
         for subject in new_subjects:
-            print('sub ' + subject)
+            print('sub')
+            print(subject)
 
         new_subjects = self.session.query(TableClass.workerid) \
                               .filter(sql.and_(~sql.sql.exists() \
