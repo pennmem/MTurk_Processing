@@ -166,9 +166,14 @@ class DBManager(object):
                                                TableClass.mode.in_(modes)))
 
         print(master_list)
+        sub_list = []
         for subject in new_subjects:
             print('sub')
             print(subject)
+            sub_list.append(subject)
+
+        print(np.array(sub_list).shape)
+        print(np.unique(np.array(sub_list)).shape)
 
         new_subjects = self.session.query(TableClass.workerid) \
                               .filter(sql.and_(~sql.sql.exists() \
