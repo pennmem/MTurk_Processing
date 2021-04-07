@@ -44,8 +44,8 @@ def load_psiturk_data(data_container, force=False, verbose=False):
 
     # Use sqlalchemy to load rows from specified table in the specified database
     with DBManager(data_container.db) as db:
-        db.add_workers_from_experiment(data_container.experiment)
-        complete_subs = db.get_complete_subjects(data_container.experiment)
+        db.add_workers_from_experiment(data_container.experiment, class_exp=data_container.class_exp)
+        complete_subs = db.get_complete_subjects(data_container.experiment, class_exp=data_container.class_exp)
 
     for row in complete_subs:
 
