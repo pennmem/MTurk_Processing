@@ -161,7 +161,7 @@ class DBManager(object):
         acceptance = Base.metadata.tables['acceptance']
 
 
-        new_subjects = self.session.query(TableClass.workerid, TableClass.mode) \
+        new_subjects = self.session.query(TableClass.workerid) \
                               .filter(sql.and_(~sql.sql.exists() \
                                                    .where(CodeMapping.workerid == TableClass.workerid),\
                                                TableClass.mode.in_(modes)))
