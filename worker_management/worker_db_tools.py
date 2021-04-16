@@ -147,21 +147,17 @@ class DBManager(object):
         return assignments
 
 
-    def add_workers_from_experiment(self, experiment, class_exp=False):
-
-        if class_exp:
-            modes = ["live", "prolific", "debug"]
-        else:
-            modes = ["live", "prolific"]
+    def add_workers_from_experiment(self, experiment):
 
         TableClass = get_class_by_tablename(experiment)
         master_list = Base.metadata.tables['master_list']
         acceptance = Base.metadata.tables['acceptance']
 
+
         new_subjects = self.session.query(TableClass.workerid) \
                               .filter(sql.and_(~sql.sql.exists() \
                                                    .where(CodeMapping.workerid == TableClass.workerid),\
-                                               TableClass.mode.in_(modes)))
+                                               TableClass.mode.in_(["live", "prolific"])))
         
         self.session.execute(master_list.insert() \
                                    .from_select(names=['workerid'], \
@@ -174,7 +170,7 @@ class DBManager(object):
                                      sql.literal(experiment)) \
                               .filter(sql.and_(~sql.sql.exists() \
                                                    .where(AcceptanceTracker.uniqueid == TableClass.uniqueid),
-                                               TableClass.mode.in_(modes)))
+                                               TableClass.mode.in_(["live", "prolific"])))
 
 
         self.session.execute(acceptance.insert() \
