@@ -163,7 +163,6 @@ class DBManager(object):
                                                    .where(CodeMapping.workerid == TableClass.workerid),\
                                                TableClass.mode.in_(modes)))
         
-        print(TableClass, new_subjects)
         self.session.execute(master_list.insert() \
                                    .from_select(names=['workerid'], \
                                                 select=new_subjects))
