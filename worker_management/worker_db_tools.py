@@ -159,6 +159,7 @@ class DBManager(object):
                                                    .where(CodeMapping.workerid == TableClass.workerid),\
                                                TableClass.mode.in_(["live", "prolific"])))
         
+        print(TableClass, new_subjects)
         self.session.execute(master_list.insert() \
                                    .from_select(names=['workerid'], \
                                                 select=new_subjects))
