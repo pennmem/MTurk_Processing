@@ -147,15 +147,25 @@ class DBManager(object):
         return assignments
 
 
+<<<<<<< HEAD
     def add_workers_from_experiment(self, experiment):
         print('---------------------------------')
         print('Adding workers from', experiment)
         print('---------------------------------')
+=======
+    def add_workers_from_experiment(self, experiment, class_exp=False):
+
+        if class_exp:
+            modes = ["live", "prolific", "debug"]
+        else:
+            modes = ["live", "prolific"]
+>>>>>>> e66b1a3ee0d4bb5cf8f247c3512367abaa443a25
 
         TableClass = get_class_by_tablename(experiment)
         master_list = Base.metadata.tables['master_list']
         acceptance = Base.metadata.tables['acceptance']
 
+<<<<<<< HEAD
 
         # unique key added to master_list.workerid, so filter not needed.
         #new_subjects = self.session.query(TableClass.workerid) \
@@ -171,6 +181,16 @@ class DBManager(object):
             select=new_subjects).prefix_with('IGNORE')
         print(insert_stmnt)
         self.session.execute(insert_stmnt)
+=======
+        new_subjects = self.session.query(TableClass.workerid) \
+                              .filter(sql.and_(~sql.sql.exists() \
+                                                   .where(CodeMapping.workerid == TableClass.workerid),\
+                                               TableClass.mode.in_(modes)))
+        
+        self.session.execute(master_list.insert() \
+                                   .from_select(names=['workerid'], \
+                                                select=new_subjects))
+>>>>>>> e66b1a3ee0d4bb5cf8f247c3512367abaa443a25
 
         #print('Done')
         new_subjects = self.session.query(TableClass.workerid,
@@ -180,7 +200,7 @@ class DBManager(object):
                                      sql.literal(experiment)) \
                               .filter(sql.and_(~sql.sql.exists() \
                                                    .where(AcceptanceTracker.uniqueid == TableClass.uniqueid),
-                                               TableClass.mode.in_(["live", "prolific"])))
+                                               TableClass.mode.in_(modes)))
 
         #print(TableClass, new_subjects)
 
