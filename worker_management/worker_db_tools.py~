@@ -11,8 +11,8 @@ Base = declarative_base()
 #     assignmentid = sql.Column(sql.String(128), nullable=False)
 #     workerid = sql.Column(sql.String(128), sql.ForeignKey("master_list.workerid"), nullable=False)
 #     bonus = sql.Column(sql.Float, default=0)
-#     date_to_send = sql.Column(sql.Date)
-#     date_sent = sql.Column(sql.Date)
+#     date_to_send = sql.Column(sql.DateTime)
+#     date_sent = sql.Column(sql.DateTime)
 #     sent = sql.Column(sql.Boolean, default=False)
 #     requestid = sql.Column(sql.Integer)
 
@@ -28,9 +28,9 @@ class SubjectTracker(Base):
     cond = sql.Column(sql.Integer, nullable=False)
     counterbalance = sql.Column(sql.Integer, nullable=False)
     codeversion = sql.Column(sql.String(128))
-    beginhit = sql.Column(sql.Date)
-    beginexp = sql.Column(sql.Date)
-    endhit = sql.Column(sql.Date)
+    beginhit = sql.Column(sql.DateTime)
+    beginexp = sql.Column(sql.DateTime)
+    endhit = sql.Column(sql.DateTime)
     bonus = sql.Column(sql.Float)
     status = sql.Column(sql.Integer)
     mode = sql.Column(sql.String(128))
@@ -52,13 +52,8 @@ class ErrorTracker(SubjectTracker):
 
 class CodeMapping(Base):
     __tablename__ = "master_list"
-<<<<<<< HEAD
-    anonymousid = sql.Column(sql.Integer, default=-1, autoincrement=True, primary_key=True) 
-    workerid = sql.Column(sql.String(50), nullable=False)
-=======
-    anonymousid = sql.Column(sql.Integer, primary_key=True) 
+    anonymousid = sql.Column(sql.Integer, autoincrement=True, primary_key=True) 
     workerid = sql.Column(sql.String(128), nullable=False)
->>>>>>> 0595ee63f970ed0d4a5662667d197d64110a2c2f
 
 class AcceptanceTracker(Base):
     __tablename__ = "acceptance"
@@ -203,13 +198,8 @@ class DBManager(object):
 
         # update paid and accepted columns
         # 5 = credited, 7 = bonused
-<<<<<<< HEAD
-        pre_accepted = session.query(TableClass.uniqueid).filter(TableClass.status.in_([5, 7])).subquery()
-        error_paid = session.query(ErrorTracker.datastring).filter(ErrorTracker.status == 7).subquery()
-=======
         pre_accepted = self.session.query(TableClass.uniqueid).filter(TableClass.status.in_([5,7])).subquery()
         error_paid = self.session.query(ErrorTracker.datastring).filter(ErrorTracker.status == 7).subquery()
->>>>>>> 0595ee63f970ed0d4a5662667d197d64110a2c2f
 
         self.session.query(AcceptanceTracker) \
                .filter(AcceptanceTracker.assignmentid.in_(error_paid)) \

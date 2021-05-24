@@ -6,6 +6,7 @@ import csv
 import os
 from pyxdameraulevenshtein import damerau_levenshtein_distance_ndarray
 from post_process.utils import progress_bar, strip_tags, change_key, filter_keys
+from functools import wraps
 
 from post_process.cleaning.plugin_processing import  html_keyboard_response_node, hold_keys_node, \
                                hold_keys_check_node, free_recall_node, \
@@ -28,6 +29,7 @@ def trialdata_decorator(func):
                  runs func for each datapoint, and aggregates the result.
     '''
 
+    @wraps(func)
     def decorated(self, raw_data):
         aggregate = []
         trialdata = self.get_trialdata(raw_data)
@@ -61,7 +63,7 @@ class DataCleaner():
         self.event_types = []
 
     @progress_bar()
-    def clean(self, force=False, verbose=False):
+    def clean(self, force=False, verbose=False, survey=True):
         '''
         The central function that takes raw data and yields a dataframe structured with discrete
         event types, experimental data, and derived fields. global identifiers, such as subject
@@ -72,8 +74,11 @@ class DataCleaner():
         :return: None
         '''
 
-        self.process_survey()
-
+        try:
+            self.process_survey()
+        except:
+            print('no survey')
+        
         raw_data_all_subs = self.data_container.get_raw_data()
         cleaned_subs = self.data_container.get_subject_codes(cleaned=True)
 
@@ -260,7 +265,7 @@ class DataCleaner():
             to_process = [code for code in to_process if code not in already_processed]
 
         for subj in to_process:
-            data,  = self.data_container.get_raw_data(subj)
+            data, = self.data_container.get_raw_data(subj)
             cond = self.get_condition(data)
 
             try:

@@ -144,9 +144,6 @@ if __name__ == "__main__":
     with DBManager(args.database) as id_db:
         if args.experiments:
             for exp in args.experiments:
-                exp = exp.strip()
-                if not exp:
-                    continue
                 id_db.add_workers_from_experiment(exp)
                 id_db.update_acceptance_tracker(exp)
 

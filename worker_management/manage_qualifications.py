@@ -99,18 +99,11 @@ if __name__ == "__main__":
     print("{}: new qualification".format(len(qualifications.keys())))
     print()
 
-    selection = int(input())
     qual_id = None
-
     while True:
         selection = int(input())
         if 0 <= selection <= len(qualifications.keys()):
-<<<<<<< HEAD
-            break;
-=======
             break
-
->>>>>>> 0595ee63f970ed0d4a5662667d197d64110a2c2f
         print("Please enter a valid option.")
 
     if selection < len(qualifications.keys()):
@@ -141,4 +134,5 @@ if __name__ == "__main__":
         with DBManager(args.db_path) as id_db:
             workers = [id_db.get_worker_id(w) for w in workers if w.startswith('MTK')]
 
+    print("Adding qualification to workers...")
     add_qualification_to_workers(client, workers, qual_id)

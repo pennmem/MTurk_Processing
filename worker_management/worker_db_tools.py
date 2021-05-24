@@ -53,7 +53,7 @@ class ErrorTracker(SubjectTracker):
 class CodeMapping(Base):
     __tablename__ = "master_list"
     anonymousid = sql.Column(sql.Integer, default=-1, autoincrement=True, primary_key=True) 
-    workerid = sql.Column(sql.String(128), nullable=False)
+    workerid = sql.Column(sql.String(128), nullable=False, unique=True)
 
 class AcceptanceTracker(Base):
     __tablename__ = "acceptance"
@@ -148,22 +148,31 @@ class DBManager(object):
 
 
     def add_workers_from_experiment(self, experiment):
+        print('---------------------------------')
+        print('Adding workers from', experiment)
+        print('---------------------------------')
 
         TableClass = get_class_by_tablename(experiment)
         master_list = Base.metadata.tables['master_list']
         acceptance = Base.metadata.tables['acceptance']
 
 
-        new_subjects = self.session.query(TableClass.workerid) \
-                              .filter(sql.and_(~sql.sql.exists() \
-                                                   .where(CodeMapping.workerid == TableClass.workerid),\
-                                               TableClass.mode.in_(["live", "prolific"])))
+        # unique key added to master_list.workerid, so filter not needed.
+        #new_subjects = self.session.query(TableClass.workerid) \
+        #                      .filter(sql.and_(~sql.sql.exists() \
+        #                                           .where(CodeMapping.workerid == TableClass.workerid),\
+        #                                       TableClass.mode.in_(["live", "prolific"])))
         
-        print(TableClass, new_subjects)
-        self.session.execute(master_list.insert() \
-                                   .from_select(names=['workerid'], \
-                                                select=new_subjects))
+        new_subjects = self.session.query(TableClass.workerid) \
+                          .filter(TableClass.mode.in_(["live", "prolific"]))
+        
+        #print(TableClass, new_subjects)
+        insert_stmnt = master_list.insert().from_select(names=['workerid'], 
+            select=new_subjects).prefix_with('IGNORE')
+        print(insert_stmnt)
+        self.session.execute(insert_stmnt)
 
+        #print('Done')
         new_subjects = self.session.query(TableClass.workerid,
                                      TableClass.uniqueid, 
                                      TableClass.assignmentid, 
@@ -173,10 +182,13 @@ class DBManager(object):
                                                    .where(AcceptanceTracker.uniqueid == TableClass.uniqueid),
                                                TableClass.mode.in_(["live", "prolific"])))
 
+        #print(TableClass, new_subjects)
 
-        self.session.execute(acceptance.insert() \
-                                  .from_select(names=['workerid', 'uniqueid', 'assignmentid', 'hitid', 'experiment'], \
-                                               select=new_subjects, include_defaults=True))
+        insert_stmnt = acceptance.insert() \
+          .from_select(names=['workerid', 'uniqueid', 'assignmentid', 'hitid', 'experiment'], \
+            select=new_subjects, include_defaults=True)
+        print(insert_stmnt)
+        self.session.execute(insert_stmnt)
 
         
         self.update_acceptance_tracker(experiment)
