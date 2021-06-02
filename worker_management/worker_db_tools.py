@@ -92,9 +92,10 @@ class DBManager(object):
     BONUSED = 7
     '''
 
-    def __init__(self, db_url):
+    def __init__(self, db_url, verbose=False):
         self.engine = sql.create_engine(db_url)
         self.Session = sql.orm.sessionmaker(bind=self.engine)
+        self.verbose = verbose
         Base.metadata.create_all(self.engine)
 
     def __enter__(self):
@@ -169,7 +170,8 @@ class DBManager(object):
         #print(TableClass, new_subjects)
         insert_stmnt = master_list.insert().from_select(names=['workerid'], 
             select=new_subjects).prefix_with('IGNORE')
-        print(insert_stmnt)
+        if self.verbose:
+            print(insert_stmnt)
         self.session.execute(insert_stmnt)
 
         #print('Done')
