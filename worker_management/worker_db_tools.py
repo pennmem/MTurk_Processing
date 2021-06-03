@@ -170,8 +170,7 @@ class DBManager(object):
         #print(TableClass, new_subjects)
         insert_stmnt = master_list.insert().from_select(names=['workerid'], 
             select=new_subjects).prefix_with('IGNORE')
-        if self.verbose_sql:
-            print(insert_stmnt)
+        print('insert_stmnt', insert_stmnt)
         self.session.execute(insert_stmnt)
 
         #print('Done')
