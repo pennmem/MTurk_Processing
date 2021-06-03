@@ -43,18 +43,22 @@ def load_psiturk_data(data_container, force=False, verbose=False):
     """
 
     # Use sqlalchemy to load rows from specified table in the specified database
-    with DBManager(data_container.db, verbose_sql=False) as db:
+    with DBManager(data_container.db) as db:
         if not data_container.class_exp:
             db.add_workers_from_experiment(data_container.experiment)
         complete_subs = db.get_complete_subjects(data_container.experiment, class_exp=data_container.class_exp)
 
     for row in complete_subs:
 
+        print('is class exp?', data_container.class_exp)
         if data_container.class_exp:
+            #class experiment IDs are already anonymized
             subj_id = row.workerid
         else:
             # Get subject ID
+            print('database', data_container.db)
             with DBManager(data_container.db) as db:
+                print('workerid', row.workerid)
                 subj_id = db.get_anonymous_id(row.workerid)
 
         row = anonymize_row(row, row.workerid, subj_id)
