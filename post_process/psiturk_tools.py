@@ -60,6 +60,7 @@ def load_psiturk_data(data_container, force=False, verbose=False):
             with DBManager(data_container.db) as db:
                 print('workerid', row.workerid)
                 subj_id = db.get_anonymous_id(row.workerid)
+                print('replacement', subj_id)
 
         row = anonymize_row(row, row.workerid, subj_id)
         datafile_path = data_container.path_from_code(subj_id)
