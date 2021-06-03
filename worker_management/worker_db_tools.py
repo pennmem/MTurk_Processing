@@ -1,6 +1,7 @@
 import sqlalchemy as sql
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
+import sys
 
 
 Base = declarative_base()
@@ -149,6 +150,9 @@ class DBManager(object):
 
 
     def add_workers_from_experiment(self, experiment):
+        if not experiment.strip():
+            raise RuntimeError('exp is blank!')
+
         print('---------------------------------')
         print('Adding workers from', experiment)
         print('---------------------------------')
