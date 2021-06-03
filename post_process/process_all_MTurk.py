@@ -1,6 +1,7 @@
 from post_process import DataContainer, get_cleaner, get_reporter, psiturk_tools
 import argparse
 import os
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("experiment", help='The name of the experiment. If db_path is supplied, this must match the name of the table containing experiment data in the database.')
@@ -12,17 +13,21 @@ parser.add_argument("--no-reports", action='store_true', default=False, help="Ad
 parser.add_argument("--no-events", action='store_true', default=False, help="Add this switch to prevent events from being run.")
 args = parser.parse_args()
 
-exp = args.experiment
+exp = args.experiment.strip()
 
 paths_dict = {}
 
 paths_dict["survey"] = "survey_responses.csv"
 paths_dict["root"] = args.data_root
-paths_dict["experiment"] = args.experiment
+paths_dict["experiment"] = exp
 paths_dict["db"] = args.db_path
 paths_dict["dictionary"] = 'dictionary.txt'
 paths_dict["wordpool"] = 'wordpool.txt'
 paths_dict["class_exp"] = 'class_' in exp
+
+if not exp:
+    print('exp is blank!')
+    sys.exit(-1)
 
 # Process json into pandas dataframe structures
 data_container = DataContainer(**paths_dict)
