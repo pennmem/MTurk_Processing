@@ -187,8 +187,10 @@ class DBManager(object):
                                                    .where(AcceptanceTracker.uniqueid == TableClass.uniqueid),
                                                TableClass.mode.in_(["live", "prolific"])))
         new_subs_list = self.session.execute(new_subjects)
+        print('printing new subs')
         for subject in new_subs_list:
             print(subject)
+        print('done printing new subs')
         #print(TableClass, new_subjects)
 
         insert_stmnt = acceptance.insert() \
