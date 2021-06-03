@@ -167,7 +167,7 @@ class DBManager(object):
         new_subjects = self.session.query(TableClass.workerid) \
                           .filter(TableClass.mode.in_(["live", "prolific"]))
         
-        #print(TableClass, new_subjects)
+        print(TableClass, new_subjects)
         insert_stmnt = master_list.insert().from_select(names=['workerid'], 
             select=new_subjects).prefix_with('IGNORE')
         print('insert_stmnt', insert_stmnt)
